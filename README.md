@@ -2,6 +2,13 @@
 
 This is a collection (currently one) of plugins I've written for GB Studio.
 
+## How to download
+
+You can download the plugin here:
+
+https://nokotin.itch.io/tile-swap-plugin-for-gb-studio
+
+
 ## How to install
 
 Download and extract the zip file into the root of your project directory.
