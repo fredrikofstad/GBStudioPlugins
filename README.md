@@ -28,7 +28,7 @@ For more information about tile swapping please read: [GB Studio central's guide
 
 First let's prepare our tilesheets. In order to swap tiles we first need to create a new scene with a tilesheet consisiting of all the tiles we want to swap. If you want to swap 16x16 tiles, the tiles have to be in the following order: Top left, top right, bottom left, bottom right. If you want several frames of animation the tiles have to come directly after eachother.
 
-![Tilesheet Preperation](https://github.com/fredrikofstad/GBStudioPlugins/res/preperation.png?raw=true)
+<img src="https://github.com/fredrikofstad/GBStudioPlugins/blob/master/res/preperation.png?raw=true" width="400">
 
 For our game scene we need to insert unique tiles where we want the tiles to be swapped, or else every tile that shares the same 8x8 image will change. In the picture you can see that I used the gbs-mono tileset.
 
@@ -49,13 +49,16 @@ Tilemap name. This is the name of the tilemap with the tiles you are swapping to
 
 Length of tileset is how many 8x8 tiles fit horizontally, and is when the script converts from coordinates to tile index. A 160x144 screen has 20 tiles, which is the default.
 
-![Result](https://github.com/fredrikofstad/GBStudioPlugins/res/result.png?raw=true)
+
+<img src="https://github.com/fredrikofstad/GBStudioPlugins/blob/master/res/result.png?raw=true" width="600">
+
+
 
 I hope this script speeds up your development time!
 
 The following scene took me around 5 minutes after setting up the tilesheet:
 
-![Result](https://github.com/fredrikofstad/GBStudioPlugins/res/animated.gif?raw=true)
+<img src="https://github.com/fredrikofstad/GBStudioPlugins/blob/master/res/animated.gif?raw=true" width="300">
 
 (Please excuse the gif compression)
 
