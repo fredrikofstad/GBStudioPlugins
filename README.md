@@ -20,8 +20,6 @@ For infinte loop animations this event should be put into an actor's update loop
 
 Besides animating your rivers and waterfalls, you can use this plugin for HUDs, menus, and other graphical changes to your scene.
 
-//something about unique tiles
-
 ### Guide - How to use the Swap Tiles plugin 
 
 For more information about tile swapping please read: [GB Studio central's guide](https://gbstudiocentral.com/tips/animating-background-tiles-3-1/) 
