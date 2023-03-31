@@ -2,6 +2,12 @@
 
 This is a collection (currently one) of plugins I've written for GB Studio.
 
+## How to install
+
+Download and extract the zip file into the root of your project directory.
+
+Ex:
+The resulting folder structure should be : C:\PATHTOPROJECT\PROJECT_DIRECTORY\plugins\SwapTiles\events\eventSwapTiles.js
 
 ## Swap Tiles
 
@@ -11,9 +17,11 @@ Instead just plop a few values into the event script and you'll be animating til
 
 You can choose to change between 1-8 tiles, either 8x8 or 16x16 and how many frames you wish to be animated.
 
+### Guide
 
+How to use Swap Tiles plugin
 
-## Current Available Plugins
+## Download Plugins
 
 You can download a zip of all plugins in the repository here:
 
