@@ -67,3 +67,5 @@ The following scene took me around 5 minutes after setting up the tilesheet:
 
 You can download the plugin here:
 
+https://nokotin.itch.io/tile-swap-plugin-for-gb-studio
+
