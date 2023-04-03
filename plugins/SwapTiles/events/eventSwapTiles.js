@@ -2,7 +2,7 @@ const id = "FO_EVENT_SWAP_TILES";
 const groups = ["Plugins"];
 const name = "Swap Tiles";
 
-const MAX_TILES = 20;
+const MAX_TILES = 50;
 
 const fields = [].concat(
   [
@@ -26,6 +26,19 @@ const fields = [].concat(
       min: 1,
       width: "50%",
       defaultValue: 1,
+    },
+
+    {
+      key: "tileMode",
+      label: "Tile sheet mode",
+      description: "Are your tiles ordered consequtively or as a 16x16 block",
+      type: "select",
+      width: "50%",
+      options: [
+      ["consequetive", "consequetive"],
+      ["block", "16x16 block"]
+      ],
+      defaultValue: "consequetive",
     },
 
     {
@@ -57,8 +70,8 @@ const fields = [].concat(
           },
           {
             key: `tile${index}_x`,
-            type: "number",
             label: `Unique Tile ${index}'s X`,
+            type: "number",
             defaultValue: 0,
             width: "50%",
             conditions: [
@@ -70,8 +83,8 @@ const fields = [].concat(
           },
           {
             key: `tile${index}_y`,
-            type: "number",
             label: `Unique Tile ${index}'s Y`,
+            type: "number",
             defaultValue: 0,
             width: "50%",
             conditions: [
@@ -98,6 +111,7 @@ const fields = [].concat(
             label: `Tileset X of Tile ${index}`,
             description: "X coordinate of the starting tile in the tileset you will be swapping to.",
             type: "number",
+            defaultValue: 0,
             min: 0,
             width: "50%",
             conditions: [
@@ -106,13 +120,13 @@ const fields = [].concat(
                 gte: index,
               },
             ],
-            defaultValue: 0,
           },
           {
             key: `swap${index}_y`,
             label: `Tileset Y of Tile ${index}`,
             description: "Y coordinate of the starting tile in the tileset you will be swapping to.",
             type: "number",
+            defaultValue: 0,
             min: 0,
             width: "50%",
             conditions: [
@@ -121,7 +135,7 @@ const fields = [].concat(
                 gte: index,
               },
             ],
-            defaultValue: 0,
+            
           },
 
           {
@@ -154,7 +168,6 @@ const fields = [].concat(
     {
       key: "tilemapName",
       label: "Tilemap Name",
-      // TODO: Check case sensitivity
       description: "The tilemap name is the name of the file of the files you want to swap in lowercase without file extensions.",
       type: "text",
       defaultValue: "",
@@ -177,15 +190,16 @@ const compile = (input, helpers) => {
     const {
         appendRaw,
         wait,
-        warnings,
+        warnings, 
     } = helpers;
 
 
     const loopAmount = input.tileAmount === "single" ? 1 : 4;
+    const isBlockMode = input.tileMode === "block";
     const hasWait = input.waitFrames != 0
     const frames = input.frames;
     const items = input.items;
-    const tilemap = input.tilemapName;
+    const tilemap = input.tilemapName.toLowerCase();
 
     
     for (let i = 0; i < frames; i++) {
@@ -201,16 +215,18 @@ const compile = (input, helpers) => {
           const currentX = [x, x + 1, x, x + 1];
           const currentY = [y, y, y + 1, y + 1];
             
-          for(let k = 0; k < loopAmount; k++){          
+          for(let k = 0; k < loopAmount; k++) {
               appendRaw(`VM_PUSH_CONST ${currentIndex}`);
               appendRaw(`VM_REPLACE_TILE_XY ${currentX[k]}, ${currentY[k]}, ___bank_bg_${tilemap}_tileset, _bg_${tilemap}_tileset, .ARG0`);
               appendRaw(`VM_POP 1`);
-              currentIndex++;
+              if(isBlockMode && k == 1){
+                currentIndex = (swapY + 1) * input.tileLength + swapX + (i * loopAmount);
+              } else {
+                currentIndex++;
+              }
           }
       }
-
-        
-        if(hasWait) wait(input.waitFrames)
+      if(hasWait) wait(input.waitFrames)
     }
 
 };
