@@ -35,10 +35,10 @@ const fields = [].concat(
       type: "select",
       width: "50%",
       options: [
-      ["consequetive", "consequetive"],
+      ["consecutive", "consecutive"],
       ["block", "16x16 block"]
       ],
-      defaultValue: "consequetive",
+      defaultValue: "consecutive",
     },
 
     {
@@ -190,18 +190,23 @@ const compile = (input, helpers) => {
     const {
         appendRaw,
         wait,
-        warnings, 
+        warnings,
     } = helpers;
 
 
-    const loopAmount = input.tileAmount === "single" ? 1 : 4;
+    const loopAmount =  input.tileAmount === "single" ? 1 : 4;
     const isBlockMode = input.tileMode === "block";
     const hasWait = input.waitFrames != 0
     const frames = input.frames;
     const items = input.items;
     const tilemap = input.tilemapName.toLowerCase();
+    const skipRow = input.tileLength;
+    const skipAmount = isBlockMode ? 2 : loopAmount;
 
-    
+    for(let j = 1; j <= items; j++){ //used for block16 mode
+      input[`skip${j}`] = 0;
+    }  
+
     for (let i = 0; i < frames; i++) {
 
       for(let j = 1; j <= items; j++){
@@ -211,19 +216,24 @@ const compile = (input, helpers) => {
           const swapX = input[`swap${j}_x`];
           const swapY = input[`swap${j}_y`];
 
-          let currentIndex = swapY * input.tileLength + swapX + (i * loopAmount);
+          let currentIndex = swapY * input.tileLength + swapX + (i * skipAmount) + input[`skip${j}`];
           const currentX = [x, x + 1, x, x + 1];
           const currentY = [y, y, y + 1, y + 1];
+
+          //warnings(`${input[`skip${j}`]}`)
             
           for(let k = 0; k < loopAmount; k++) {
               appendRaw(`VM_PUSH_CONST ${currentIndex}`);
               appendRaw(`VM_REPLACE_TILE_XY ${currentX[k]}, ${currentY[k]}, ___bank_bg_${tilemap}_tileset, _bg_${tilemap}_tileset, .ARG0`);
               appendRaw(`VM_POP 1`);
               if(isBlockMode && k == 1){
-                currentIndex = (swapY + 1) * input.tileLength + swapX + (i * loopAmount);
+                currentIndex = (swapY + 1) * input.tileLength + swapX + (i * skipAmount) + input[`skip${j}`];
+              } else if(isBlockMode && k == 3 && ((currentIndex + 1) % input.tileLength == 0)){ // check if on the edge of tilemap
+                input[`skip${j}`] += skipRow;
               } else {
                 currentIndex++;
               }
+
           }
       }
       if(hasWait) wait(input.waitFrames)
