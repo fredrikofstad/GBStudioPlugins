@@ -60,13 +60,15 @@ const fields = [].concat(
         const index = i + 1;
         arr.push(
           {
-            type: "break",
+            key: `collapseTile${index}`,
+            label: `Tile${index}`,
             conditions: [
               {
                 key: "items",
                 gte: index,
-              },
+              }
             ],
+            type: "collapsable",
           },
           {
             key: `tile${index}_x`,
@@ -78,6 +80,10 @@ const fields = [].concat(
               {
                 key: "items",
                 gte: index,
+              },
+              {
+                key: `collapseTile${index}`,
+                ne: true
               },
             ],
           },
@@ -92,6 +98,10 @@ const fields = [].concat(
                 key: "items",
                 gte: index,
               },
+              {
+                key: `collapseTile${index}`,
+                ne: true
+              },
             ],
           },
 
@@ -102,6 +112,10 @@ const fields = [].concat(
               {
                 key: "items",
                 gte: index,
+              },
+              {
+                key: `collapseTile${index}`,
+                ne: true
               },
             ],
           },
@@ -119,6 +133,10 @@ const fields = [].concat(
                 key: "items",
                 gte: index,
               },
+              {
+                key: `collapseTile${index}`,
+                ne: true
+              },
             ],
           },
           {
@@ -134,6 +152,10 @@ const fields = [].concat(
                 key: "items",
                 gte: index,
               },
+              {
+                key: `collapseTile${index}`,
+                ne: true
+              },
             ],
             
           },
@@ -144,6 +166,10 @@ const fields = [].concat(
               {
                 key: "items",
                 gte: index,
+              },
+              {
+                key: `collapseTile${index}`,
+                ne: true
               },
             ],
           },
@@ -219,8 +245,6 @@ const compile = (input, helpers) => {
           let currentIndex = swapY * input.tileLength + swapX + (i * skipAmount) + input[`skip${j}`];
           const currentX = [x, x + 1, x, x + 1];
           const currentY = [y, y, y + 1, y + 1];
-
-          //warnings(`${input[`skip${j}`]}`)
             
           for(let k = 0; k < loopAmount; k++) {
               appendRaw(`VM_PUSH_CONST ${currentIndex}`);
