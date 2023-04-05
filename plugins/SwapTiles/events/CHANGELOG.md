@@ -1,5 +1,10 @@
 # Swap Tiles Change Log
  
+## [1.1.1] - 2023-04-04
+
+### Added
+- Ability to collapse the sections of the different tiles.
+
 ## [1.1.0] - 2023-04-04
  
 ### Added
