@@ -1,3 +1,6 @@
 /assets/
 *.gbsproj
 *.gbsproj.bak
+.idea
+/temp/
+/assets/
