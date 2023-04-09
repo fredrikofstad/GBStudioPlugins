@@ -243,6 +243,7 @@ const compile = (input, helpers) => {
           const swapY = input[`swap${j}_y`];
 
           let currentIndex = swapY * input.tileLength + swapX + (i * skipAmount) + input[`skip${j}`];
+          
           const currentX = [x, x + 1, x, x + 1];
           const currentY = [y, y, y + 1, y + 1];
             

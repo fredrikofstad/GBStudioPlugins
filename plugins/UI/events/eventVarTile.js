@@ -11,7 +11,6 @@ const fields = [].concat(
       key: "tilemapName",
       label: "UI Tilemap",
       type: "text",
-      defaultValue: "hud",
       width: "50%",
     },
     {
@@ -137,7 +136,7 @@ const fields = [].concat(
             label: `Variable`,
             description: "The variable to determine the frame",
             type: "variable",
-            defaultValue: 4,
+            defaultValue: "LAST_VARIABLE",
             width: "50%",
             conditions: [
               {
@@ -162,7 +161,7 @@ const fields = [].concat(
             [2, "8x16"],
             [4, "16x16"]
             ],
-            defaultValue: "8",
+            defaultValue: 1,
             conditions: [
               {
                 key: "items",
@@ -197,7 +196,7 @@ const compile = (input, helpers) => {
       const y = input[`tile${i}_y`];
       const swapX = input[`swap${i}_x`];
       const swapY = input[`swap${i}_y`];
-      const size = input[`size${i}`]
+      const size = input[`size${i}`];
       const frame = getVariableAlias(input[`var${i}`]);
       const skipAmount = size == 4 ? 2 : frame == 0 ? 0 : 1;
 

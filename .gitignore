@@ -3,4 +3,4 @@
 *.gbsproj.bak
 .idea
 /temp/
-/assets/
+/build/
