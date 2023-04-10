@@ -6,6 +6,11 @@ const fields = [].concat(
   [
 
     {
+      key: "init",
+      label: "Fill in with blank tiles?",
+      type: "checkbox",
+    },
+    {
       key: "tilemapName",
       label: "UI Tilemap",
       type: "text",
@@ -24,7 +29,7 @@ const fields = [].concat(
     {
       key: `tile_x`,
       type: "start",
-      label: `Start Tile's X in BG`,
+      label: `X coordinate of start tile in BG`,
       type: "number",
       defaultValue: 0,
       min: 0,
@@ -33,7 +38,7 @@ const fields = [].concat(
     {
       key: `tile_y`,
       type: "number",
-      label: `Start Tile's Y in BG`,
+      label: `Y coordinate of start tile in BG`,
       type: "number",
       defaultValue: 0,
       min: 0,
@@ -76,6 +81,12 @@ const fields = [].concat(
       defaultValue: "LAST_VARIABLE",
       min: 0,
       width: "50%",
+    },
+
+    {
+      key: "clamp",
+      label: "Clamp current health var between 0 and Max Health?",
+      type: "checkbox",
     },
 
     {
@@ -123,6 +134,7 @@ const compile = (input, helpers) => {
     variableSetToValue("T0", 0);
     variableSetToValue("T1", 0);
 
+    //gets index for x and y coords
 
     const getIndex = `
     VM_PUSH_CONST ${currentX}
@@ -130,6 +142,8 @@ const compile = (input, helpers) => {
     VM_GET_TILE_XY VAR_TEMP_1, .ARG1, .ARG0
     VM_POP 2
     `;
+
+    //calculates how many full hearts in HP variable
 
     const calculateFull = `
     ; how many full hearts
@@ -142,6 +156,7 @@ const compile = (input, helpers) => {
     VM_POP 1
 `;
 
+    //loop replacing tiles to full hearts, skips a line if i > heartsPerLine
     const loop = `
     ; Variable Set To Value
     VM_PUSH_CONST 0
@@ -185,9 +200,10 @@ increment$:
 
     VM_JUMP                 cond$
 break$:
+    ; remaining variable on stack will be popped in the end
 `;
 
-
+    // calculate division of hp and add the correct tile if true
     const calculateRemain = `
     ; how many non full hearts 
     VM_RPN
@@ -200,6 +216,13 @@ break$:
     VM_IF_CONST         .EQ, .ARG0, ${tileIndex}, skip$, 0
     VM_REPLACE_TILE VAR_TEMP_1, ___bank_bg_${tilemap}_tileset, _bg_${tilemap}_tileset, .ARG0, 1
     VM_RPN
+        .R_REF      VAR_TEMP_0
+        .R_INT8    1
+        .R_OPERATOR .ADD
+        .R_STOP
+    VM_SET    VAR_TEMP_0, .ARG0
+    VM_POP 1
+    VM_RPN
         .R_REF      VAR_TEMP_1
         .R_INT8    1
         .R_OPERATOR .ADD
@@ -210,10 +233,64 @@ skip$:
     VM_POP 1
     `;
 
+    // check if current health + remainder is less than maxHP
+
+    const emptyLoop = `
+    VM_SET    .ARG0, VAR_TEMP_0
+    ; max hearts into division
+    VM_RPN
+            .R_REF ${max}
+            .R_INT8 ${division}
+            .R_OPERATOR .DIV
+            .R_STOP
+    VM_SET    VAR_TEMP_0, .ARG0
+    VM_POP 1
+
+emptyCond$:
+    VM_IF     .LT, .ARG0, VAR_TEMP_0, emptyIter$, 0
+    VM_JUMP       done$
+emptyIter$:
+    ;;;; Replace Tiles with empty heart
+    VM_PUSH_CONST ${tileIndex}
+    VM_REPLACE_TILE VAR_TEMP_1, ___bank_bg_${tilemap}_tileset, _bg_${tilemap}_tileset, .ARG0, 1
+    VM_POP 1
+
+    VM_IF_CONST         .EQ, VAR_TEMP_0, ${heartsPerLine-1}, emptyAddline$, 0
+    VM_JUMP       emptyAddone$
+emptyAddline$:
+    VM_PUSH_CONST ${currentX}
+    VM_PUSH_CONST ${currentY+1}
+    VM_GET_TILE_XY VAR_TEMP_1, .ARG1, .ARG0
+    VM_POP 2
+    VM_JUMP       emptyIncrement$
+
+emptyAddone$:
+    VM_RPN
+        .R_REF      VAR_TEMP_1
+        .R_INT8    1
+        .R_OPERATOR .ADD
+        .R_STOP
+    VM_SET    VAR_TEMP_1, .ARG0
+    VM_POP 1
+emptyIncrement$:
+    ; Variables .ADD Value
+    VM_RPN
+        .R_REF      .ARG0
+        .R_INT8    1
+        .R_OPERATOR .ADD
+        .R_STOP
+    VM_SET    .ARG1, .ARG0
+    VM_POP 1
+    VM_JUMP                 emptyCond$
+done$:
+    VM_POP 1
+`;
+
     appendRaw(getIndex);
     appendRaw(calculateFull);
     appendRaw(loop);
-    appendRaw(calculateRemain)
+    appendRaw(calculateRemain);
+    appendRaw(emptyLoop); 
 
 };
 
