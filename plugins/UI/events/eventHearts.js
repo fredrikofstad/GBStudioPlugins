@@ -255,7 +255,7 @@ emptyIter$:
     VM_REPLACE_TILE VAR_TEMP_1, ___bank_bg_${tilemap}_tileset, _bg_${tilemap}_tileset, .ARG0, 1
     VM_POP 1
 
-    VM_IF_CONST         .EQ, VAR_TEMP_0, ${heartsPerLine-1}, emptyAddline$, 0
+    VM_IF_CONST         .EQ, .ARG0, ${heartsPerLine-1}, emptyAddline$, 0
     VM_JUMP       emptyAddone$
 emptyAddline$:
     VM_PUSH_CONST ${currentX}
