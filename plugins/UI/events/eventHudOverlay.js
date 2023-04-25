@@ -62,10 +62,8 @@ const fields = [].concat(
     if (positionTop) {
         appendRaw(
         `; Set overlay scanline cut
-        VM_PUSH_CONST 0
-        VM_GET_UINT8 .ARG0, _overlay_cut_scanline
         VM_SET_CONST_UINT8 _overlay_cut_scanline, ${height * 8 - 1}
-        VM_POP 1`);
+        `);
     }
 
     appendRaw(
