@@ -72,7 +72,7 @@ const fields = [].concat(
 
     appendRaw(
         `; Move Overlay
-        VM_OVERLAY_MOVE_TO      0, ${overlayY}, 0
+        VM_OVERLAY_SETPOS 0, ${overlayY}
         VM_OVERLAY_WAIT         .UI_MODAL, .UI_WAIT_WINDOW`
     );
 
