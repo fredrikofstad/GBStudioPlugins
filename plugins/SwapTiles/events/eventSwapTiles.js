@@ -1,5 +1,5 @@
 const id = "FO_EVENT_SWAP_TILES";
-const groups = ["Plugins"];
+const groups = ["Tiles"];
 const name = "Swap Tiles";
 
 const MAX_TILES = 50;

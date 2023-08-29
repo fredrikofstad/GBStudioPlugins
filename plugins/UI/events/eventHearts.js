@@ -1,5 +1,5 @@
 const id = "FO_EVENT_UI_HEARTS";
-const groups = ["Plugins"];
+const groups = ["Tiles"];
 const name = "UI Hearts";
 
 const fields = [].concat(

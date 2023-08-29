@@ -1,6 +1,6 @@
-const id = "FO_EVENT_UI_VAR";
-const groups = ["Plugins"];
-const name = "UI Variable Tiles";
+const id = "FO_EVENT_UI_FRAME";
+const groups = ["Tiles"];
+const name = "UI Frame Tiles";
 
 const MAX_TILES = 20;
 
