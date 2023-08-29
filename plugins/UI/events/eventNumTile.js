@@ -1,5 +1,5 @@
 const id = "FO_EVENT_UI_NUM";
-const groups = ["Plugins"];
+const groups = ["Tiles"];
 const name = "UI Number Tiles";
 
 const fields = [].concat(

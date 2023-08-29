@@ -1,5 +1,5 @@
 const id = "FO_EVENT_RESET_CUTSCANLINE";
-const groups = ["UI"];
+const groups = ["Tiles"];
 const name = "UI Reset Cut Scanline";
 
 const fields = [].concat(

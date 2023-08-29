@@ -1,5 +1,5 @@
 const id = "FO_EVENT_UI_BLANK";
-const groups = ["Plugins"];
+const groups = ["Tiles"];
 const name = "UI Fill Blank";
 
 const fields = [].concat(
