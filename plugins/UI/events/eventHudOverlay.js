@@ -1,5 +1,5 @@
 const id = "FO_EVENT_HUD_OVERLAY";
-const groups = ["UI"];
+const groups = ["Tiles"];
 const name = "UI Hud Overlay";
 
 
@@ -74,13 +74,9 @@ const fields = [].concat(
         `; Move Overlay
         VM_OVERLAY_SETPOS 0, ${overlayY}
         VM_OVERLAY_WAIT         .UI_MODAL, .UI_WAIT_WINDOW`
-    );
-
-    
+    ); 
 
 };
-
-
 
   module.exports = {
     id,
