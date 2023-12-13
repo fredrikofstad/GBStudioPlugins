@@ -3,6 +3,7 @@ const groups = ["Tiles"];
 const name = "Swap Tiles Var";
 
 const MAX_TILES = 50;
+let initFade = false;
 
 // conditions:
 const advancedView = {
@@ -33,7 +34,7 @@ const fields = [
   {
     key: "tabs",
     type: "tabs",
-    defaultValue: "items",
+    defaultValue: "default",
     values: {
       default: "Default",
       advanced: "Advanced Settings",
@@ -47,9 +48,18 @@ const fields = [
   // advanced view fields //
 
   {
+    key: "init",
+    label: "Swap tiles after init fade",
+    type: "checkbox",
+    default: false,
+    conditions: [advancedView],
+  },
+
+  {
     key: "override",
     label: "Override referencing and manually input fields",
     type: "checkbox",
+    default: false,
     conditions: [advancedView],
   },
 
@@ -85,9 +95,9 @@ const fields = [
 
   {
     key: "tilemapName",
-    label: "Tilemap Name",
-    description: "The tilemap name is the name of the file of the files you want to swap in lowercase without file extensions.",
-    type: "text",
+    label: "Tilemap",
+    description: "The tilemap you want to swap tiles with",
+    type: "background",
     defaultValue: "",
     flexBasis: "100%",
     conditions: [defaultView],
@@ -224,21 +234,23 @@ const compile = (input, helpers) => {
     getVariableAlias,
     temporaryEntityVariable,
     wait,
-    warnings
+    warnings,
+    backgrounds
   } = helpers;
 
-  const tilemap = input.tilemapName.toLowerCase();
+  const tilemap = backgrounds.find((background) => background.id === input.tilemapName).symbol
   const skipRow = input.tileLength == null ? 20 : input.tileLength;
   const tilesize = input.tilesize;
   const frames = input.frames;
   const items = input.items;
-  const overrideTileset = input.override;
+  const overrideTileset = input.override ? true : false;
+  initFade = input.init ? true : false;
 
   const replaceTile = overrideTileset ? 
         `VM_REPLACE_TILE .TILEID, ${input._tileset}, .SWAPID, ${tilesize}`
-      : `VM_REPLACE_TILE .TILEID, ___bank_bg_${tilemap}_tileset, _bg_${tilemap}_tileset, .SWAPID, ${tilesize}`
+      : `VM_REPLACE_TILE .TILEID, ___bank_${tilemap}_tileset, _${tilemap}_tileset, .SWAPID, ${tilesize}`
 
-  if(overrideTileset.value && (input._tileset == null || input._tileset == ""))
+  if(overrideTileset && (input._tileset == null || input._tileset == ""))
     warnings("Override is set but bank and tilesheet field is blank!\n" + replaceTile)
 
   if (input.references) {
@@ -315,4 +327,5 @@ module.exports = {
   groups,
   fields,
   compile,
+  waitUntilAfterInitFade: initFade,
 };
