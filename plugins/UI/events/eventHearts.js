@@ -12,18 +12,11 @@ const fields = [].concat(
     },
     {
       key: "tilemapName",
-      label: "UI Tilemap",
-      type: "text",
-      width: "50%",
-    },
-    {
-      key: "tileLength",
-      label: "Length Of Tilemap",
-      description: "How many tiles your tilemap has in the X axis",
-      type: "number",
-      min: 0,
-      width: "50%",
-      defaultValue: 20,
+      label: "Tilemap",
+      description: "The tilemap you want to swap tiles with",
+      type: "background",
+      defaultValue: "",
+      flexBasis: "100%",
     },
 
     {
@@ -114,10 +107,12 @@ const compile = (input, helpers) => {
         warnings,
         variableSetToValue,
         getVariableAlias,
+        backgrounds,
     } = helpers;
 
-    const tilemap = input.tilemapName.toLowerCase();
-    const length = input.tileLength;
+    const bg = backgrounds.find((background) => background.id === input.tilemapName);
+    const tilemap = bg.symbol;
+    const length = bg.width;
     const heartsPerLine = input[`heartsPerLine`];
 
     let currentX = input[`tile_x`];
@@ -168,7 +163,7 @@ cond$:
 iter$:
     ;;;; Replace Tile
     VM_PUSH_CONST ${maxHeart}
-    VM_REPLACE_TILE VAR_TEMP_1, ___bank_bg_${tilemap}_tileset, _bg_${tilemap}_tileset, .ARG0, 1
+    VM_REPLACE_TILE VAR_TEMP_1, ___bank_${tilemap}_tileset, _${tilemap}_tileset, .ARG0, 1
     VM_POP 1
 
     VM_IF_CONST         .EQ, .ARG0, ${heartsPerLine-1}, addline$, 0
@@ -214,7 +209,7 @@ break$:
             .R_OPERATOR .ADD
             .R_STOP
     VM_IF_CONST         .EQ, .ARG0, ${tileIndex}, skip$, 0
-    VM_REPLACE_TILE VAR_TEMP_1, ___bank_bg_${tilemap}_tileset, _bg_${tilemap}_tileset, .ARG0, 1
+    VM_REPLACE_TILE VAR_TEMP_1, ___bank_${tilemap}_tileset, _${tilemap}_tileset, .ARG0, 1
     VM_RPN
         .R_REF      VAR_TEMP_0
         .R_INT8    1
@@ -252,7 +247,7 @@ emptyCond$:
 emptyIter$:
     ;;;; Replace Tiles with empty heart
     VM_PUSH_CONST ${tileIndex}
-    VM_REPLACE_TILE VAR_TEMP_1, ___bank_bg_${tilemap}_tileset, _bg_${tilemap}_tileset, .ARG0, 1
+    VM_REPLACE_TILE VAR_TEMP_1, ___bank_${tilemap}_tileset, _${tilemap}_tileset, .ARG0, 1
     VM_POP 1
 
     VM_IF_CONST         .EQ, .ARG0, ${heartsPerLine-1}, emptyAddline$, 0

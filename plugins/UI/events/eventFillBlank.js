@@ -6,18 +6,11 @@ const fields = [].concat(
   [
     {
       key: "tilemapName",
-      label: "UI Tilemap",
-      type: "text",
-      width: "50%",
-    },
-    {
-      key: "tileLength",
-      label: "Length Of Tilemap",
-      description: "How many tiles your tilemap has in the X axis",
-      type: "number",
-      min: 0,
-      width: "50%",
-      defaultValue: 20,
+      label: "Tilemap",
+      description: "The tilemap you want to swap tiles with",
+      type: "background",
+      defaultValue: "",
+      flexBasis: "100%",
     },
 
     {
@@ -83,18 +76,20 @@ const fields = [].concat(
 const compile = (input, helpers) => {
     const {
         appendRaw,
+        backgrounds,
     } = helpers;
 
-    const tilemap = input.tilemapName.toLowerCase();
-    const length = input.tileLength;
+    const bg = backgrounds.find((background) => background.id === input.tilemapName);
+    const tilemap = bg.symbol;
+    const length = bg.width;
 
     const staticX = input[`tile_x`];
     let currentX = staticX;
     let currentY = input[`tile_y`];
     const swapX = input[`swap_x`];
     const swapY = input[`swap_y`];
-    const rowLength = input[`row_length`]
-    const rowAmount = input[`row_amount`]
+    const rowLength = input[`row_length`];
+    const rowAmount = input[`row_amount`];
     const tileIndex = swapY * length + swapX;
     const Xlimit = rowLength + currentX - 1;
 
@@ -103,8 +98,7 @@ const compile = (input, helpers) => {
     appendRaw(`VM_PUSH_CONST ${tileIndex}`);
     
     for (let i = 0; i < loopMax; i++) {
-      
-      appendRaw(`VM_REPLACE_TILE_XY ${currentX}, ${currentY}, ___bank_bg_${tilemap}_tileset, _bg_${tilemap}_tileset, .ARG0`);
+      appendRaw(`VM_REPLACE_TILE_XY ${currentX}, ${currentY}, ___bank_${tilemap}_tileset, _${tilemap}_tileset, .ARG0`);
       if(currentX == Xlimit){
         currentY++;
         currentX = staticX;

@@ -9,18 +9,11 @@ const fields = [].concat(
 
     {
       key: "tilemapName",
-      label: "UI Tilemap",
-      type: "text",
-      width: "50%",
-    },
-    {
-      key: "tileLength",
-      label: "Length Of Tilemap",
-      description: "How many tiles your tilemap has in the X axis",
-      type: "number",
-      min: 0,
-      width: "50%",
-      defaultValue: 20,
+      label: "Tilemap",
+      description: "The tilemap you want to swap tiles with",
+      type: "background",
+      defaultValue: "",
+      flexBasis: "100%",
     },
 
     {
@@ -185,11 +178,13 @@ const compile = (input, helpers) => {
         appendRaw,
         warnings,
         getVariableAlias,
+        backgrounds,
     } = helpers;
 
     const items = input.items;
-    const tilemap = input.tilemapName.toLowerCase();
-    const length = input.tileLength;
+    const bg = backgrounds.find((background) => background.id === input.tilemapName);
+    const tilemap = bg.symbol;
+    const length = bg.width;
 
     for(let i = 1; i <= items; i++) {
       const x = input[`tile${i}_x`];
@@ -216,7 +211,7 @@ const compile = (input, helpers) => {
         appendRaw(`.R_INT8 ${tileIndex[j]}`);
         appendRaw(`.R_OPERATOR .ADD`);
         appendRaw(`.R_STOP`);
-        appendRaw(`VM_REPLACE_TILE_XY ${currentX[j]}, ${currentY[j]}, ___bank_bg_${tilemap}_tileset, _bg_${tilemap}_tileset, .ARG0`);
+        appendRaw(`VM_REPLACE_TILE_XY ${currentX[j]}, ${currentY[j]}, ___bank_${tilemap}_tileset, _${tilemap}_tileset, .ARG0`);
         appendRaw(`VM_POP 1`);
       }
 

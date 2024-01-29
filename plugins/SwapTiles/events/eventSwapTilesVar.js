@@ -238,7 +238,7 @@ const compile = (input, helpers) => {
     backgrounds
   } = helpers;
 
-  const tilemap = backgrounds.find((background) => background.id === input.tilemapName).symbol
+  const tilemap = backgrounds.find((background) => background.id === input.tilemapName).symbol;
   const skipRow = input.tileLength == null ? 20 : input.tileLength;
   const tilesize = input.tilesize;
   const frames = input.frames;
