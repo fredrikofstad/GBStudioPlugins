@@ -7,7 +7,9 @@ This is a collection of plugins I've written for GB Studio.
 You can download the plugin here:
 
 Swap Tiles: https://nokotin.itch.io/tile-swap-plugin-for-gb-studio
+
 UI Plugin Pack:
+
 Projectile Plus:
 
 ## How to install
