@@ -204,22 +204,32 @@ const fields = [
             key: `swap${index}_x`,
             label: `Tileset X`,
             description: "X coordinate of the starting tile in the tileset you will be swapping to.",
-            type: "number",
-            defaultValue: 0,
-            min: 0,
+            type: "union",
+            types: ["number", "variable"],
+            defaultType: "number",
+            defaultValue: {
+              number: 0,
+              variable: "LAST_VARIABLE",
+            },
             width: "50%",
             conditions: [defaultView, itemView(index), collapseView(index)],
           },
+
           {
             key: `swap${index}_y`,
             label: `Tileset Y`,
             description: "Y coordinate of the starting tile in the tileset you will be swapping to.",
-            type: "number",
-            defaultValue: 0,
-            min: 0,
+            type: "union",
+            types: ["number", "variable"],
+            defaultType: "number",
+            defaultValue: {
+              number: 0,
+              variable: "LAST_VARIABLE",
+            },
             width: "50%",
             conditions: [defaultView, itemView(index), collapseView(index)],
           },
+
         );
         return arr;
       }, []),
@@ -245,7 +255,6 @@ const compile = (input, helpers) => {
   const items = input.items;
   const overrideTileset = input.override ? true : false;
   initFade = input.init ? true : false;
-
   const replaceTile = overrideTileset ? 
         `VM_REPLACE_TILE .TILEID, ${input._tileset}, .SWAPID, ${tilesize}`
       : `VM_REPLACE_TILE .TILEID, ___bank_${tilemap}_tileset, _${tilemap}_tileset, .SWAPID, ${tilesize}`
@@ -271,8 +280,8 @@ const compile = (input, helpers) => {
       
       const tileX = input[`tile${j}_x`];
       const tileY = input[`tile${j}_y`];
-      const swapX = input[`swap${j}_x`];
-      const swapY = input[`swap${j}_y`];
+      const swapXUnion = input[`swap${j}_x`];
+      const swapYUnion = input[`swap${j}_y`];
 
       if(tileX.type === "variable")
         appendRaw(`VM_SET .TILEX, ${getVariableAlias(variableFromUnion(tileX, temporaryEntityVariable(0)))}`)
@@ -282,10 +291,23 @@ const compile = (input, helpers) => {
         appendRaw(`VM_SET .TILEY, ${getVariableAlias(variableFromUnion(tileY, temporaryEntityVariable(0)))}`)
       else
         appendRaw(`VM_SET_CONST .TILEY, ${tileY.value}`);
+      if(swapXUnion.type === "variable")
+        // not implemented
+        pass
+      else
+        swapX = tileX.value;
+      if(swapYUnion.type === "variable")
+        // not implemented
+        pass
+      else
+        swapY = tileX.value;
+
+      
 
 
       appendRaw(`VM_GET_TILE_XY .TILEID, .TILEX, .TILEY`);
-      appendRaw(`VM_SET_CONST .SWAPID, ${swapY * skipRow + swapX + (tilesize * i)}`);
+      appendRaw(`VM_SET_CONST .SWAPID, ${swapY
+        * skipRow + swapX + (tilesize * i)}`);
       appendRaw(replaceTile);
       if(tilesize == 2){
         appendRaw(`
