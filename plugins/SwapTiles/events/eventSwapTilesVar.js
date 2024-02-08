@@ -98,7 +98,6 @@ const fields = [
     label: "Tilemap",
     description: "The tilemap you want to swap tiles with",
     type: "background",
-    defaultValue: "",
     flexBasis: "100%",
     conditions: [defaultView],
   },
@@ -173,6 +172,7 @@ const fields = [
             type: "union",
             types: ["number", "variable"],
             defaultType: "number",
+            min: 0,
             defaultValue: {
               number: 0,
               variable: "LAST_VARIABLE",
@@ -187,6 +187,7 @@ const fields = [
             type: "union",
             types: ["number", "variable"],
             defaultType: "number",
+            min: 0,
             defaultValue: {
               number: 0,
               variable: "LAST_VARIABLE",
@@ -204,22 +205,36 @@ const fields = [
             key: `swap${index}_x`,
             label: `Tileset X`,
             description: "X coordinate of the starting tile in the tileset you will be swapping to.",
-            type: "number",
-            defaultValue: 0,
+            type: "union",
+            types: ["number", "variable"],
+            defaultType: "number",
             min: 0,
+            unitsField: "tiles",
+            defaultValue: {
+              number: 0,
+              variable: "LAST_VARIABLE",
+            },
             width: "50%",
             conditions: [defaultView, itemView(index), collapseView(index)],
           },
+
           {
             key: `swap${index}_y`,
             label: `Tileset Y`,
             description: "Y coordinate of the starting tile in the tileset you will be swapping to.",
-            type: "number",
-            defaultValue: 0,
+            type: "union",
+            types: ["number", "variable"],
+            defaultType: "number",
             min: 0,
+            unitsField: "tiles",
+            defaultValue: {
+              number: 0,
+              variable: "LAST_VARIABLE",
+            },
             width: "50%",
             conditions: [defaultView, itemView(index), collapseView(index)],
           },
+
         );
         return arr;
       }, []),
@@ -230,6 +245,7 @@ const compile = (input, helpers) => {
   const { 
     appendRaw, 
     compileReferencedAssets, 
+    _addComment,
     variableFromUnion,
     getVariableAlias,
     temporaryEntityVariable,
@@ -238,14 +254,17 @@ const compile = (input, helpers) => {
     backgrounds
   } = helpers;
 
-  const tilemap = backgrounds.find((background) => background.id === input.tilemapName).symbol;
-  const skipRow = input.tileLength == null ? 20 : input.tileLength;
+  // prep
+  if (!input.tilemapName) warnings("Did you remember to set the tilemap?")
+  const bg = backgrounds.find((background) => background.id === input.tilemapName);
+  const tilemap = bg.symbol;
+  
+  const skipRow = input.tileLength == null ? bg.width : input.tileLength;
   const tilesize = input.tilesize;
   const frames = input.frames;
   const items = input.items;
   const overrideTileset = input.override ? true : false;
   initFade = input.init ? true : false;
-
   const replaceTile = overrideTileset ? 
         `VM_REPLACE_TILE .TILEID, ${input._tileset}, .SWAPID, ${tilesize}`
       : `VM_REPLACE_TILE .TILEID, ___bank_${tilemap}_tileset, _${tilemap}_tileset, .SWAPID, ${tilesize}`
@@ -256,9 +275,15 @@ const compile = (input, helpers) => {
   if (input.references) {
     compileReferencedAssets(input.references);
   }
+  
+  // Start scripting
+
+  _addComment("Swap Tiles");
 
   //push 4 values to stack
   appendRaw(`
+    VM_PUSH_CONST 0 \n .SWAPX  = .ARG5
+    VM_PUSH_CONST 0 \n .SWAPY  = .ARG4
     VM_PUSH_CONST 0 \n .TILEX  = .ARG3
     VM_PUSH_CONST 0 \n .TILEY  = .ARG2
     VM_PUSH_CONST 0 \n .TILEID = .ARG1
@@ -268,34 +293,62 @@ const compile = (input, helpers) => {
   for (let i = 0; i < frames; i++) {
 
     for(let j = 1; j <= items; j++){
-      
+      // assiging correct settings for all tiles
+
       const tileX = input[`tile${j}_x`];
       const tileY = input[`tile${j}_y`];
-      const swapX = input[`swap${j}_x`];
-      const swapY = input[`swap${j}_y`];
+      const swapXUnion = input[`swap${j}_x`];
+      const swapYUnion = input[`swap${j}_y`];
 
-      if(tileX.type === "variable")
-        appendRaw(`VM_SET .TILEX, ${getVariableAlias(variableFromUnion(tileX, temporaryEntityVariable(0)))}`)
-      else
+      
+
+      if (tileX.type === "number" && tileY.type === "number") {  
         appendRaw(`VM_SET_CONST .TILEX, ${tileX.value}`);
-      if(tileY.type === "variable")
-        appendRaw(`VM_SET .TILEY, ${getVariableAlias(variableFromUnion(tileY, temporaryEntityVariable(0)))}`)
-      else
         appendRaw(`VM_SET_CONST .TILEY, ${tileY.value}`);
-
-
+      } else {
+        appendRaw(`VM_SET .TILEX, ${getVariableAlias(variableFromUnion(tileX, temporaryEntityVariable(0)))}`)
+        appendRaw(`VM_SET .TILEY, ${getVariableAlias(variableFromUnion(tileY, temporaryEntityVariable(0)))}`)
+      } 
+      
       appendRaw(`VM_GET_TILE_XY .TILEID, .TILEX, .TILEY`);
-      appendRaw(`VM_SET_CONST .SWAPID, ${swapY * skipRow + swapX + (tilesize * i)}`);
+
+      // swap X and Y
+
+      // if not variables, do const way
+      if (swapXUnion.type === "number" && swapYUnion.type === "number") {  
+          swapX = swapXUnion.value;
+          swapY = swapYUnion.value;
+          appendRaw(`VM_SET_CONST .SWAPID, ${swapY * skipRow + swapX + (tilesize * i)}`);
+      } else {
+        appendRaw(`VM_SET .SWAPX, ${getVariableAlias(variableFromUnion(swapXUnion, temporaryEntityVariable(0)))}`)
+        appendRaw(`VM_SET .SWAPY, ${getVariableAlias(variableFromUnion(swapYUnion, temporaryEntityVariable(0)))}`)
+
+        appendRaw(`
+        VM_RPN
+          .R_REF .SWAPY
+          .R_INT8 ${skipRow} 
+          .R_OPERATOR .MUL
+          .R_REF .SWAPX
+          .R_OPERATOR .ADD
+          .R_INT8 ${tilesize}
+          .R_INT8 ${i}
+          .R_OPERATOR .MUL
+          .R_OPERATOR .ADD
+          .R_REF_SET .SWAPID
+          .R_STOP
+        `);
+      }   
+
       appendRaw(replaceTile);
       if(tilesize == 2){
         appendRaw(`
         VM_RPN
           .R_REF .TILEY
-          .R_INT8 1
+          .R_INT16 1
           .R_OPERATOR .ADD
           .R_REF_SET .TILEY
           .R_REF .SWAPID
-          .R_INT8 ${skipRow}
+          .R_INT16 ${skipRow}
           .R_OPERATOR .ADD
           .R_REF_SET .SWAPID
           .R_STOP
@@ -305,7 +358,7 @@ const compile = (input, helpers) => {
         appendRaw(`
         VM_RPN
           .R_REF .TILEY
-          .R_INT8 1
+          .R_INT16 1
           .R_OPERATOR .SUB
           .R_REF_SET .TILEY
           .R_STOP
@@ -317,7 +370,7 @@ const compile = (input, helpers) => {
   }
 
   //clear stack
-  appendRaw(`VM_POP 4`);
+  appendRaw(`VM_POP 6`);
 
 };
 
