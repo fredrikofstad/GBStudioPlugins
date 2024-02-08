@@ -3,5 +3,6 @@
 *.gbsproj.bak
 .idea
 /temp/
+/itch/
 /build/
 *.zip
