@@ -110,7 +110,8 @@ const fields = [
     width: "50%",
     options: [
       [1, "8x8"],
-      [2, "16x16"]
+      [2, "16x16"],
+      [3, "16x24"],
     ],
     defaultValue: 1,
     conditions: [defaultView],
@@ -241,6 +242,15 @@ const fields = [
 
 ];
 
+function getXLength(input) {
+  // allows for future tilesize values
+  switch (input){
+    case 1: return 1;
+    case 2: return 2;
+    case 3: return 2;
+  }
+}
+
 const compile = (input, helpers) => {
   const { 
     appendRaw, 
@@ -254,6 +264,31 @@ const compile = (input, helpers) => {
     backgrounds
   } = helpers;
 
+  function appendLine() {
+    appendRaw(`
+          VM_RPN
+            .R_REF .TILEY
+            .R_INT16 1
+            .R_OPERATOR .ADD
+            .R_REF_SET .TILEY
+            .R_REF .SWAPID
+            .R_INT16 ${skipRow}
+            .R_OPERATOR .ADD
+            .R_REF_SET .SWAPID
+            .R_STOP
+          `);
+      appendRaw(`VM_GET_TILE_XY .TILEID, .TILEX, .TILEY`);
+      appendRaw(replaceTile);
+      appendRaw(`
+          VM_RPN
+            .R_REF .TILEY
+            .R_INT16 1
+            .R_OPERATOR .SUB
+            .R_REF_SET .TILEY
+            .R_STOP
+          `);
+  }
+
   // prep
   if (!input.tilemapName) warnings("Did you remember to set the tilemap?")
   const bg = backgrounds.find((background) => background.id === input.tilemapName);
@@ -261,13 +296,14 @@ const compile = (input, helpers) => {
   
   const skipRow = input.tileLength == null ? bg.width : input.tileLength;
   const tilesize = input.tilesize;
+  const xLength = getXLength(input.tilesize);
   const frames = input.frames;
   const items = input.items;
   const overrideTileset = input.override ? true : false;
   initFade = input.init ? true : false;
   const replaceTile = overrideTileset ? 
-        `VM_REPLACE_TILE .TILEID, ${input._tileset}, .SWAPID, ${tilesize}`
-      : `VM_REPLACE_TILE .TILEID, ___bank_${tilemap}_tileset, _${tilemap}_tileset, .SWAPID, ${tilesize}`
+        `VM_REPLACE_TILE .TILEID, ${input._tileset}, .SWAPID, ${xLength}`
+      : `VM_REPLACE_TILE .TILEID, ___bank_${tilemap}_tileset, _${tilemap}_tileset, .SWAPID, ${xLength}`
 
   if(overrideTileset && (input._tileset == null || input._tileset == ""))
     warnings("Override is set but bank and tilesheet field is blank!\n" + replaceTile)
@@ -318,7 +354,7 @@ const compile = (input, helpers) => {
       if (swapXUnion.type === "number" && swapYUnion.type === "number") {  
           swapX = swapXUnion.value;
           swapY = swapYUnion.value;
-          appendRaw(`VM_SET_CONST .SWAPID, ${swapY * skipRow + swapX + (tilesize * i)}`);
+          appendRaw(`VM_SET_CONST .SWAPID, ${swapY * skipRow + swapX + (xLength * i)}`);
       } else {
         appendRaw(`VM_SET .SWAPX, ${getVariableAlias(variableFromUnion(swapXUnion, temporaryEntityVariable(0)))}`)
         appendRaw(`VM_SET .SWAPY, ${getVariableAlias(variableFromUnion(swapYUnion, temporaryEntityVariable(0)))}`)
@@ -330,7 +366,7 @@ const compile = (input, helpers) => {
           .R_OPERATOR .MUL
           .R_REF .SWAPX
           .R_OPERATOR .ADD
-          .R_INT8 ${tilesize}
+          .R_INT8 ${xLength}
           .R_INT8 ${i}
           .R_OPERATOR .MUL
           .R_OPERATOR .ADD
@@ -341,28 +377,10 @@ const compile = (input, helpers) => {
 
       appendRaw(replaceTile);
       if(tilesize == 2){
-        appendRaw(`
-        VM_RPN
-          .R_REF .TILEY
-          .R_INT16 1
-          .R_OPERATOR .ADD
-          .R_REF_SET .TILEY
-          .R_REF .SWAPID
-          .R_INT16 ${skipRow}
-          .R_OPERATOR .ADD
-          .R_REF_SET .SWAPID
-          .R_STOP
-        `);
-        appendRaw(`VM_GET_TILE_XY .TILEID, .TILEX, .TILEY`);
-        appendRaw(replaceTile);
-        appendRaw(`
-        VM_RPN
-          .R_REF .TILEY
-          .R_INT16 1
-          .R_OPERATOR .SUB
-          .R_REF_SET .TILEY
-          .R_STOP
-        `);
+        appendLine();
+      }
+      if(tilesize == 3){
+        appendLine();
       }
     }
     if(input.wait != 0)
