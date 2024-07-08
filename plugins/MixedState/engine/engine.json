@@ -1,0 +1,24 @@
+{
+  "version": "4.0.0-e0",
+  "sceneTypes": [{"key": "MIXED", "label": "Mixed State"}],
+
+  "fields": [
+    {
+      "key": "CURRENT_STATE",
+      "label": "CURRENT SCENE TYPE",
+      "group": "Mixed State",
+      "type": "select",
+      "options": [
+        [0, "Topdown"],
+        [1, "Platformer"],
+        [2, "Adventure"],
+        [3, "Shmup"],
+        [4, "Point and Click"],
+        [5, "Logo"]
+      ],
+      "cType": "UBYTE",
+      "defaultValue": 0
+    }
+  ]
+}
+
