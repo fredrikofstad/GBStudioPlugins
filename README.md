@@ -10,7 +10,7 @@ Swap Tiles: https://nokotin.itch.io/tile-swap-plugin-for-gb-studio
 
 UI Plugin Pack:
 
-Projectile Plus:
+Custom Projectile:
 
 ## How to install
 
@@ -35,11 +35,11 @@ Besides animating your rivers and waterfalls, you can use this plugin for HUDs, 
 
 ## UI Plugin Pack
 
-Not currently released but available in github
+Not currently released but available on github
 
-## Projectile Plus
+## Cutsom Projectile
 
-Not currently released but available in github
+Not currently released but available on github
 
 
 
