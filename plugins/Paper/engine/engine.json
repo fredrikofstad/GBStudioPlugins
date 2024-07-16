@@ -1,0 +1,55 @@
+{
+  "version": "4.0.0-e0",
+  "sceneTypes": [{"key": "PAPER", "label": "Paper State"}],
+
+  "fields": [
+
+    {
+      "key": "INPUT_PAPER_INTERACT",
+      "label": "FIELD_INPUT_INTERACT",
+      "group": "Paper State",
+      "type": "select",
+      "options": [
+        ["INPUT_A", "A"],
+        ["INPUT_B", "B"]
+      ],
+      "cType": "define",
+      "defaultValue": "INPUT_A"
+    },
+    {
+      "key": "paper_grid",
+      "label": "FIELD_GRID_SIZE",
+      "group": "Paper State",
+      "type": "select",
+      "options": [
+        [8, "FIELD_GRID_8PX"],
+        [16, "FIELD_GRID_16PX"]
+      ],
+      "cType": "UBYTE",
+      "defaultValue": 8
+    },
+    {
+      "key": "follow",
+      "label": "Partner Follow?",
+      "group": "Paper State",
+      "type": "select",
+      "options": [
+        [0, "NO PARTNER"],
+        [1, "FOLLOW"]
+      ],
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "partner",
+      "label": "Partner Actor ID",
+      "group": "Paper State",
+      "cType": "UBYTE",
+      "defaultValue": 1
+    }
+
+  ]
+
+
+
+}
