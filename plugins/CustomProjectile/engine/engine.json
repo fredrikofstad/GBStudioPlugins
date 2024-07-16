@@ -1,0 +1,53 @@
+{
+  "version": "4.0.0-e0",
+
+  "fields": [
+    {
+      "key": "projectile_type",
+      "label": "Cutsom Projectile",
+      "group": "Cutsom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_no_lifetime",
+      "label": "Cutsom Projectile",
+      "group": "Cutsom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_distance",
+      "label": "Distance of Boomerang",
+      "group": "Cutsom Projectiles",
+      "type" : "number",
+      "cType": "UBYTE",
+      "defaultValue": 6
+    },
+    {
+      "key": "projectile_amplitude",
+      "label": "Amplitude of Sine Wave",
+      "type" : "number",
+      "group": "Cutsom Projectiles",
+      "cType": "UINT8",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_frequency",
+      "label": "Amplitude of Sine Wave",
+      "type" : "number",
+      "group": "Cutsom Projectiles",
+      "cType": "UINT8",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_phase",
+      "label": "Amplitude of Sine Wave",
+      "type" : "number",
+      "group": "Cutsom Projectiles",
+      "cType": "UINT8",
+      "defaultValue": 0
+    }
+  ]
+}
+

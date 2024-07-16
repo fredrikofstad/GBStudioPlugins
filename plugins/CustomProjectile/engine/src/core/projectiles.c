@@ -11,19 +11,108 @@
 #include "game_time.h"
 #include "vm.h"
 
+#define FIXED 7
+
 UBYTE projectile_type;
+UBYTE projectile_no_lifetime;
+
+UBYTE projectile_distance;
+
+UINT8 projectile_amplitude;
+UINT8 projectile_frequency;
+UINT8 projectile_phase;
 
 typedef enum {
     DEFAULT = 0,
     ARC,
     GRAVITY,
-    BOOMERANG
+    BOOMERANG,
+    SINE
 } projectile_state;
 
 projectile_t projectiles[MAX_PROJECTILES];
 projectile_def_t projectile_defs[MAX_PROJECTILE_DEFS];
 projectile_t *projectiles_active_head;
 projectile_t *projectiles_inactive_head;
+
+static UBYTE _save_bank;
+static projectile_t *projectile;
+static projectile_t *prev_projectile;
+
+
+void handle_sine(projectile_t *projectile) NONBANKED {
+    projectile->phase += projectile->frequency;
+    projectile->phase %= 256; // phase between 0-255
+
+    INT8 sine_value = SIN(projectile->phase);
+    INT8 scaled_sine_value = ((sine_value * projectile->amplitude) >> FIXED);
+
+    // Update position based on the sine wave
+    switch (projectile->dir) {
+        case DIR_RIGHT:
+        case DIR_LEFT:
+            projectile->pos.y -= scaled_sine_value;
+            break;
+        case DIR_UP:
+        case DIR_DOWN:
+            projectile->pos.x -= scaled_sine_value;
+            break;
+    }
+    
+
+    // projectile->pos.x += projectile->delta_pos.x;
+}
+
+void handle_gravity(projectile_t *projectile) NONBANKED {
+    if (projectile->delta_pos.y == 0) {
+        projectile->delta_pos.y = 65;
+    } else {
+        projectile->delta_pos.y -= 8;
+        if (projectile->delta_pos.x < 0) {
+            projectile->delta_pos.x += 1;
+        } else if (projectile->delta_pos.x > 0) {
+            projectile->delta_pos.x -= 1;
+        }
+    }
+}
+
+void remove_projectile(void) NONBANKED {
+    projectile_t *next = projectile->next;
+    LL_REMOVE_ITEM(projectiles_active_head, projectile, prev_projectile);
+    LL_PUSH_HEAD(projectiles_inactive_head, projectile);
+    projectile = next;
+}
+
+void handle_arc(projectile_t *projectile) NONBANKED {
+    if (projectile->delta_pos.y > -40) {
+        projectile->delta_pos.y -= 7;
+    }
+    WORD tile_x = ((projectile->pos.x) >> 7) + 1;
+    WORD tile_y = (projectile->pos.y) >> 7;
+    if (tile_at(tile_x, tile_y + 1) & COLLISION_TOP) {
+        projectile->delta_pos.y = 50;
+    }
+    if (tile_at(tile_x, tile_y) & (COLLISION_LEFT | COLLISION_RIGHT)) {
+        remove_projectile();
+    }
+}
+
+void handle_boomerang(projectile_t *projectile) NONBANKED {
+    switch (projectile->dir) {
+        case DIR_RIGHT:
+           projectile->delta_pos.x -= 1;
+            break;
+        case DIR_LEFT:
+            projectile->delta_pos.x += 1;
+            break;
+        case DIR_UP:
+            projectile->delta_pos.y -= 1;
+            break;
+        case DIR_DOWN:
+            projectile->delta_pos.y += 1;
+            break;
+    }
+}
 
 void projectiles_init(void) BANKED {
     projectiles_active_head = projectiles_inactive_head = NULL;
@@ -32,13 +121,7 @@ void projectiles_init(void) BANKED {
     }
 }
 
-static UBYTE _save_bank;
-static projectile_t *projectile;
-static projectile_t *prev_projectile;
-
 void projectiles_update(void) NONBANKED {
-    projectile_t *next;
-
     projectile = projectiles_active_head;
     prev_projectile = NULL;
 
@@ -47,13 +130,12 @@ void projectiles_update(void) NONBANKED {
     while (projectile) {
         if (projectile->def.life_time == 0) {
             // Remove projectile
-            next = projectile->next;
-            LL_REMOVE_ITEM(projectiles_active_head, projectile, prev_projectile);
-            LL_PUSH_HEAD(projectiles_inactive_head, projectile);
-            projectile = next;
+            remove_projectile();
             continue;
         }
-        projectile->def.life_time--;
+        if(!projectile_no_lifetime){
+            projectile->def.life_time--;
+        }
 
         // Check reached animation tick frame
         if ((game_time & projectile->def.anim_tick) == 0) {
@@ -81,106 +163,35 @@ void projectiles_update(void) NONBANKED {
                 }
                 if (!projectile->strong) {
                     // Remove projectile
-                    next = projectile->next;
-                    LL_REMOVE_ITEM(projectiles_active_head, projectile, prev_projectile);
-                    LL_PUSH_HEAD(projectiles_inactive_head, projectile);
-                    projectile = next;
+                    remove_projectile();
                     continue;
                 }
             }
-        } else {
 
             switch (projectile_type) {
-                case DEFAULT: break;
+                case DEFAULT:
+                    break;
                 case GRAVITY:
-                    if (projectile->delta_pos.y == 0) {
-                        projectile->delta_pos.y = 65;
-                    } else {
-                        projectile->delta_pos.y -= 8;
-                        if (projectile->delta_pos.x < 0) {
-                            projectile->delta_pos.x += 1;
-                        } else if (projectile->delta_pos.x > 0) {
-                            projectile->delta_pos.x -= 1;
-                        }
-                    }
+                    handle_gravity(projectile);
                     break;
-
                 case ARC:
-                    if (projectile->delta_pos.y > -40) {
-                        projectile->delta_pos.y -= 7;
-                    }
-                    WORD tile_x = ((projectile->pos.x) >> 7) + 1;
-                    WORD tile_y = (projectile->pos.y) >> 7;
-                    // floor below
-                    if (tile_at(tile_x, tile_y + 1) & COLLISION_TOP) {
-                        // bounce
-                        projectile->delta_pos.y = 50;
-                    }
-                    // collided with wall
-                    if (tile_at(tile_x, tile_y) & (COLLISION_LEFT | COLLISION_RIGHT)) {
-                        // Remove projectile
-                        projectile_t *next = projectile->next;
-                        LL_REMOVE_ITEM(projectiles_active_head, projectile, prev_projectile);
-                        LL_PUSH_HEAD(projectiles_inactive_head, projectile);
-                        projectile = next;
-                        continue;
-                    }
+                    handle_arc(projectile);
                     break;
-                    
                 case BOOMERANG:
-                    switch (projectile->dir) {
-                        case DIR_RIGHT:
-                            if (projectile->delta_pos.x > -6 && projectile->delta_pos.x < 6) {
-                                projectile->delta_pos.x -= 2;
-                            } else if (projectile->delta_pos.x > -16 && projectile->delta_pos.x < 16) {
-                                projectile->delta_pos.x -= 2;
-                            } else {
-                                projectile->delta_pos.x -= 3;
-                            }
-                            break;
-
-                        case DIR_LEFT:
-                             if (projectile->delta_pos.x > -6 && projectile->delta_pos.x < 6) {
-                                projectile->delta_pos.x += 2;
-                            } else if (projectile->delta_pos.x > -16 && projectile->delta_pos.x < 16) {
-                                projectile->delta_pos.x += 2;
-                            } else {
-                                projectile->delta_pos.x += 3;
-                            }
-                            break;
-                        case DIR_UP:
-                            if (projectile->delta_pos.y > -6 && projectile->delta_pos.y < 6) {
-                                projectile->delta_pos.y -= 1;
-                            } else if (projectile->delta_pos.y > -16 && projectile->delta_pos.y < 16) {
-                                projectile->delta_pos.y -= 2;
-                            } else {
-                                projectile->delta_pos.y -= 3;
-                            }
-                            break;
-                        case DIR_DOWN:
-                            if (projectile->delta_pos.y > -6 && projectile->delta_pos.y < 6) {
-                                projectile->delta_pos.y += 1;
-                            } else if (projectile->delta_pos.y > -16 && projectile->delta_pos.y < 16) {
-                                projectile->delta_pos.y += 2;
-                            } else {
-                                projectile->delta_pos.y += 3;
-                            }
-                            break;
-                    }
-
+                    handle_boomerang(projectile);
+                    break;
+                case SINE:
+                    handle_sine(projectile);
                     break;
             }
-        }
+        } 
 
-        UINT8 screen_x = (projectile->pos.x >> 4) - draw_scroll_x + 8,
+        UBYTE screen_x = (projectile->pos.x >> 4) - draw_scroll_x + 8,
               screen_y = (projectile->pos.y >> 4) - draw_scroll_y + 8;
 
         if (screen_x > 160 || screen_y > 144) {
             // Remove projectile
-            projectile_t *next = projectile->next;
-            LL_REMOVE_ITEM(projectiles_active_head, projectile, prev_projectile);
-            LL_PUSH_HEAD(projectiles_inactive_head, projectile);
-            projectile = next;
+            remove_projectile();
             continue;
         }
 
@@ -209,15 +220,12 @@ void projectiles_render(void) NONBANKED {
     _save_bank = _current_bank;
 
     while (projectile) {
-        UINT8 screen_x = (projectile->pos.x >> 4) - draw_scroll_x + 8,
-              screen_y = (projectile->pos.y >> 4) - draw_scroll_y + 8;
+        UINT8 screen_x = ((projectile->pos.x >> 4) + 8) - draw_scroll_x,
+              screen_y = ((projectile->pos.y >> 4) + 8) - draw_scroll_y;
 
-        if (screen_x > 160 || screen_y > 144) {
+        if ((screen_x > DEVICE_SCREEN_PX_WIDTH) || (screen_y > DEVICE_SCREEN_PX_HEIGHT)) {
             // Remove projectile
-            projectile_t *next = projectile->next;
-            LL_REMOVE_ITEM(projectiles_active_head, projectile, prev_projectile);
-            LL_PUSH_HEAD(projectiles_inactive_head, projectile);
-            projectile = next;
+            remove_projectile();
             continue;
         }
 
@@ -282,6 +290,11 @@ void projectile_launch(UBYTE index, upoint16_t *pos, UBYTE angle, UBYTE flags) B
             projectile->pos.x += ((sinv * (UINT8)(initial_offset)) >> 7);
             projectile->pos.y -= ((cosv * (UINT8)(initial_offset)) >> 7);
         }
+
+        projectile->amplitude = projectile_amplitude;   // Set amplitude of sine wave
+        projectile->frequency = projectile_frequency;    // Set frequency of sine wave
+        projectile->phase = projectile_phase;         // Starting phase for sine
+
 
         point_translate_angle_to_delta(&projectile->delta_pos, angle, projectile->def.move_speed);
 

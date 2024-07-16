@@ -7,18 +7,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "data/scene_types.h"
 #include "bankdata.h"
 #include "parallax.h"
 #include "collision.h"
-
-typedef enum {
-    SCENE_TYPE_TOPDOWN = 0,
-    SCENE_TYPE_PLATFORM,
-    SCENE_TYPE_ADVENTURE,
-    SCENE_TYPE_SHMUP,
-    SCENE_TYPE_POINTNCLICK,
-    SCENE_TYPE_LOGO
-} scene_type_e;
 
 typedef enum {
     LCD_simple,
@@ -50,8 +42,8 @@ typedef struct actor_t
     bool collision_enabled    : 1;
     bool movement_interrupt   : 1;
     bool persistent           : 1;
-    direction_e adir;
     upoint16_t pos;
+    direction_e adir;
     direction_e dir;
     bounding_box_t bounds;
     uint8_t base_tile;
@@ -142,7 +134,6 @@ typedef struct projectile_t
 {
     bool anim_noloop          : 1;
     bool strong               : 1;
-    UBYTE dir;
     upoint16_t pos;
     point16_t delta_pos;
     uint8_t frame;
@@ -150,6 +141,10 @@ typedef struct projectile_t
     uint8_t frame_end;
     projectile_def_t def;
     struct projectile_t *next;
+    UBYTE dir;          // Direction
+    int8_t amplitude;   // Amplitude of the sine wave
+    int8_t frequency;   // Frequency of the sine wave
+    uint8_t phase;      // Current phase offset of the sine wave
 } projectile_t;
 
 #define FONT_RECODE     1
