@@ -15,19 +15,26 @@
 
 UBYTE projectile_type;
 UBYTE projectile_no_lifetime;
+UBYTE projectile_no_bounds;
 
 UBYTE projectile_distance;
 
-UINT8 projectile_amplitude;
-UINT8 projectile_frequency;
-UINT8 projectile_phase;
+UBYTE projectile_amplitude;
+UBYTE projectile_frequency;
+UBYTE projectile_phase;
+
+UBYTE projectile_delta_x;
+UBYTE projectile_delta_y;
 
 typedef enum {
     DEFAULT = 0,
     ARC,
     GRAVITY,
     BOOMERANG,
-    SINE
+    SINE,
+    //HOMING,
+    CUSTOM,
+    ORBIT
 } projectile_state;
 
 projectile_t projectiles[MAX_PROJECTILES];
@@ -39,29 +46,54 @@ static UBYTE _save_bank;
 static projectile_t *projectile;
 static projectile_t *prev_projectile;
 
+int16_t sine;
+int16_t cosine;
+
+
+void handle_orbit(projectile_t *projectile) NONBANKED {
+    projectile->phase += projectile->frequency;
+    projectile->phase %= 256;
+
+    // Calculate the new position using sine and cosine for orbit
+    cosine = ((COS(projectile->phase) * projectile->amplitude) >> FIXED) * 2;
+    sine = ((SIN(projectile->phase) * projectile->amplitude) >> FIXED) * 2;
+
+    // Update projectile position based on center point
+    projectile->pos.x = PLAYER.pos.x + cosine;
+    projectile->pos.y = PLAYER.pos.y + sine;
+}
 
 void handle_sine(projectile_t *projectile) NONBANKED {
     projectile->phase += projectile->frequency;
     projectile->phase %= 256; // phase between 0-255
 
-    INT8 sine_value = SIN(projectile->phase);
-    INT8 scaled_sine_value = ((sine_value * projectile->amplitude) >> FIXED);
+    sine = ((SIN(projectile->phase) * projectile->amplitude) >> FIXED) * 2;
 
     // Update position based on the sine wave
     switch (projectile->dir) {
         case DIR_RIGHT:
         case DIR_LEFT:
-            projectile->pos.y -= scaled_sine_value;
+            projectile->pos.y -= sine;
             break;
         case DIR_UP:
         case DIR_DOWN:
-            projectile->pos.x -= scaled_sine_value;
+            projectile->pos.x -= sine;
             break;
     }
     
-
-    // projectile->pos.x += projectile->delta_pos.x;
 }
+
+/*
+void handle_homing(projectile_t *projectile) NONBANKED {
+    //point_translate_angle_to_delta(&projectile->delta_pos, angle, projectile->def.move_speed);
+    int16_t dx = (projectile->pos.x - actors[projectile_target].pos.x)/8;
+    int16_t dy = (projectile->pos.y - actors[projectile_target].pos.y)/8;
+
+    uint8_t angle = atan2(dx, dy);
+    point_translate_angle_to_delta(&projectile->delta_pos, angle, projectile->def.move_speed);
+}
+*/
+
 
 void handle_gravity(projectile_t *projectile) NONBANKED {
     if (projectile->delta_pos.y == 0) {
@@ -76,26 +108,24 @@ void handle_gravity(projectile_t *projectile) NONBANKED {
     }
 }
 
+
 void remove_projectile(void) NONBANKED {
     projectile_t *next = projectile->next;
     LL_REMOVE_ITEM(projectiles_active_head, projectile, prev_projectile);
     LL_PUSH_HEAD(projectiles_inactive_head, projectile);
     projectile = next;
 }
-
+/*
 void handle_arc(projectile_t *projectile) NONBANKED {
     if (projectile->delta_pos.y > -40) {
         projectile->delta_pos.y -= 7;
     }
-    WORD tile_x = ((projectile->pos.x) >> 7) + 1;
-    WORD tile_y = (projectile->pos.y) >> 7;
+    WORD tile_x = ((projectile->pos.x) >> FIXED) + 1;
+    WORD tile_y = (projectile->pos.y) >> FIXED;
     if (tile_at(tile_x, tile_y + 1) & COLLISION_TOP) {
         projectile->delta_pos.y = 50;
     }
-    if (tile_at(tile_x, tile_y) & (COLLISION_LEFT | COLLISION_RIGHT)) {
-        remove_projectile();
-    }
-}
+} */
 
 void handle_boomerang(projectile_t *projectile) NONBANKED {
     switch (projectile->dir) {
@@ -112,6 +142,11 @@ void handle_boomerang(projectile_t *projectile) NONBANKED {
             projectile->delta_pos.y += 1;
             break;
     }
+}
+
+void handle_custom(projectile_t *projectile) NONBANKED {
+    projectile->pos.x += *(script_memory + projectile_delta_x);
+    projectile->pos.y -= *(script_memory + projectile_delta_y);
 }
 
 void projectiles_init(void) BANKED {
@@ -150,10 +185,6 @@ void projectiles_update(void) NONBANKED {
             }
         }
 
-        // Move projectile
-        projectile->pos.x += projectile->delta_pos.x;
-        projectile->pos.y -= projectile->delta_pos.y;
-
         if (IS_FRAME_EVEN) {
             actor_t *hit_actor = actor_overlapping_bb(&projectile->def.bounds, &projectile->pos, NULL, FALSE);
             if (hit_actor && (hit_actor->collision_group & projectile->def.collision_mask)) {
@@ -171,11 +202,11 @@ void projectiles_update(void) NONBANKED {
             switch (projectile_type) {
                 case DEFAULT:
                     break;
-                case GRAVITY:
-                    handle_gravity(projectile);
-                    break;
                 case ARC:
-                    handle_arc(projectile);
+                    //handle_arc(projectile);
+                    break;
+                case GRAVITY:
+                    //handle_gravity(projectile);
                     break;
                 case BOOMERANG:
                     handle_boomerang(projectile);
@@ -183,13 +214,28 @@ void projectiles_update(void) NONBANKED {
                 case SINE:
                     handle_sine(projectile);
                     break;
+                //case HOMING:
+                //    handle_homing(projectile);
+                case CUSTOM:
+                    handle_custom(projectile);
+                    break;
+                case ORBIT:
+                    handle_orbit(projectile);
             }
         } 
+
+        // Move projectile
+        if(projectile_type != CUSTOM || projectile_type != ORBIT){
+            projectile->pos.x += projectile->delta_pos.x;
+            projectile->pos.y -= projectile->delta_pos.y;
+        }
+        
+
 
         UBYTE screen_x = (projectile->pos.x >> 4) - draw_scroll_x + 8,
               screen_y = (projectile->pos.y >> 4) - draw_scroll_y + 8;
 
-        if (screen_x > 160 || screen_y > 144) {
+        if (!projectile_no_bounds && (screen_x > 160 || screen_y > 144)) {
             // Remove projectile
             remove_projectile();
             continue;
