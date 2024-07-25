@@ -12,6 +12,7 @@
 #include "vm.h"
 
 #define FIXED 7
+#define FORCE 1
 
 UBYTE projectile_type;
 UBYTE projectile_no_lifetime;
@@ -50,26 +51,27 @@ int16_t sine;
 int16_t cosine;
 
 
-void handle_orbit(projectile_t *projectile) NONBANKED {
+void update_phase(projectile_t *projectile) NONBANKED {
     projectile->phase += projectile->frequency;
     projectile->phase %= 256;
+    sine = ((SIN(projectile->phase) * projectile->amplitude) >> FIXED) * 2;
+}
 
+void handle_orbit(projectile_t *projectile) NONBANKED {
+    update_phase(projectile);
     // Calculate the new position using sine and cosine for orbit
     cosine = ((COS(projectile->phase) * projectile->amplitude) >> FIXED) * 2;
-    sine = ((SIN(projectile->phase) * projectile->amplitude) >> FIXED) * 2;
-
+    
     // Update projectile position based on center point
     projectile->pos.x = PLAYER.pos.x + cosine;
     projectile->pos.y = PLAYER.pos.y + sine;
 }
 
 void handle_sine(projectile_t *projectile) NONBANKED {
-    projectile->phase += projectile->frequency;
-    projectile->phase %= 256; // phase between 0-255
-
-    sine = ((SIN(projectile->phase) * projectile->amplitude) >> FIXED) * 2;
-
+    update_phase(projectile);
+    
     // Update position based on the sine wave
+
     switch (projectile->dir) {
         case DIR_RIGHT:
         case DIR_LEFT:
@@ -80,6 +82,7 @@ void handle_sine(projectile_t *projectile) NONBANKED {
             projectile->pos.x -= sine;
             break;
     }
+    
     
 }
 
@@ -94,17 +97,20 @@ void handle_homing(projectile_t *projectile) NONBANKED {
 }
 */
 
-
-void handle_gravity(projectile_t *projectile) NONBANKED {
-    if (projectile->delta_pos.y == 0) {
-        projectile->delta_pos.y = 65;
-    } else {
-        projectile->delta_pos.y -= 8;
-        if (projectile->delta_pos.x < 0) {
-            projectile->delta_pos.x += 1;
-        } else if (projectile->delta_pos.x > 0) {
-            projectile->delta_pos.x -= 1;
-        }
+void handle_boomerang(projectile_t *projectile) NONBANKED {
+    switch (projectile->dir) {
+        case DIR_RIGHT:
+           projectile->delta_pos.x -= FORCE;
+            break;
+        case DIR_LEFT:
+            projectile->delta_pos.x += FORCE;
+            break;
+        case DIR_UP:
+            projectile->delta_pos.y -= FORCE;
+            break;
+        case DIR_DOWN:
+            projectile->delta_pos.y += FORCE;
+            break;
     }
 }
 
@@ -115,7 +121,7 @@ void remove_projectile(void) NONBANKED {
     LL_PUSH_HEAD(projectiles_inactive_head, projectile);
     projectile = next;
 }
-/*
+
 void handle_arc(projectile_t *projectile) NONBANKED {
     if (projectile->delta_pos.y > -40) {
         projectile->delta_pos.y -= 7;
@@ -125,22 +131,19 @@ void handle_arc(projectile_t *projectile) NONBANKED {
     if (tile_at(tile_x, tile_y + 1) & COLLISION_TOP) {
         projectile->delta_pos.y = 50;
     }
-} */
+    
+}
 
-void handle_boomerang(projectile_t *projectile) NONBANKED {
-    switch (projectile->dir) {
-        case DIR_RIGHT:
-           projectile->delta_pos.x -= 1;
-            break;
-        case DIR_LEFT:
+void handle_gravity(projectile_t *projectile) NONBANKED {
+    if (projectile->delta_pos.y == 0) {
+        projectile->delta_pos.y = 65;
+    } else {
+        projectile->delta_pos.y -= 8;
+        if (projectile->delta_pos.x < 0) {
             projectile->delta_pos.x += 1;
-            break;
-        case DIR_UP:
-            projectile->delta_pos.y -= 1;
-            break;
-        case DIR_DOWN:
-            projectile->delta_pos.y += 1;
-            break;
+        } else {
+            projectile->delta_pos.x -= 1;
+        }
     }
 }
 
@@ -148,6 +151,33 @@ void handle_custom(projectile_t *projectile) NONBANKED {
     projectile->pos.x += *(script_memory + projectile_delta_x);
     projectile->pos.y -= *(script_memory + projectile_delta_y);
 }
+
+void handle_types(projectile_t *projectile) NONBANKED {
+    switch (projectile_type) {
+        case DEFAULT:
+            break;
+        case ARC:
+            handle_arc(projectile);
+            break;
+        case GRAVITY:
+            handle_gravity(projectile);
+            break;
+        case BOOMERANG:
+            handle_boomerang(projectile);
+            break;
+        case SINE:
+            handle_sine(projectile);
+            break;
+        //case HOMING:
+        //    handle_homing(projectile);
+        case CUSTOM:
+            handle_custom(projectile);
+            break;
+        case ORBIT:
+            handle_orbit(projectile);
+    }
+}
+
 
 void projectiles_init(void) BANKED {
     projectiles_active_head = projectiles_inactive_head = NULL;
@@ -199,29 +229,7 @@ void projectiles_update(void) NONBANKED {
                 }
             }
 
-            switch (projectile_type) {
-                case DEFAULT:
-                    break;
-                case ARC:
-                    //handle_arc(projectile);
-                    break;
-                case GRAVITY:
-                    //handle_gravity(projectile);
-                    break;
-                case BOOMERANG:
-                    handle_boomerang(projectile);
-                    break;
-                case SINE:
-                    handle_sine(projectile);
-                    break;
-                //case HOMING:
-                //    handle_homing(projectile);
-                case CUSTOM:
-                    handle_custom(projectile);
-                    break;
-                case ORBIT:
-                    handle_orbit(projectile);
-            }
+            handle_types(projectile);
         } 
 
         // Move projectile
@@ -229,8 +237,6 @@ void projectiles_update(void) NONBANKED {
             projectile->pos.x += projectile->delta_pos.x;
             projectile->pos.y -= projectile->delta_pos.y;
         }
-        
-
 
         UBYTE screen_x = (projectile->pos.x >> 4) - draw_scroll_x + 8,
               screen_y = (projectile->pos.y >> 4) - draw_scroll_y + 8;
