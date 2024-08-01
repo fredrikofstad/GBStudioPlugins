@@ -11,11 +11,19 @@ const generalView = {
   key: "tabs",
   in: ["general"],
 };
+const arc = {
+  key: "projectile",
+  eq: 1
+};
 const boomerang = {
+  key: "projectile",
+  eq: 2
+};
+const sineWave = {
   key: "projectile",
   eq: 3
 };
-const sineWave = {
+const orbit = {
   key: "projectile",
   eq: 4
 };
@@ -23,9 +31,10 @@ const custom = {
   key: "projectile",
   eq: 5
 };
-const orbit = {
-  key: "projectile",
-  eq: 6
+
+const bounce = {
+  key: "collision",
+  gte: 2
 };
 
 const fields = [
@@ -55,6 +64,37 @@ const fields = [
     defaultValue: false,
     conditions: [generalView],
   },
+  {
+    key: "gravity",
+    label: "Gravity",
+    type: "slider",
+    defaultValue: 0,
+    min: -15,
+    max: 15,
+    conditions: [generalView]
+  },
+  {
+    key: "collision",
+    label: "Collision Behaviour",
+    type: "select",
+    options: [
+      [0, "No effect"],
+      [1, "Remove Projectile"],
+      [2, "Bounce"],
+      [3, "Bounce (only floor)"],
+    ],
+    defaultValue: 0,
+    conditions: [generalView]
+  },
+  {
+    key: "bounce",
+    label: "Bounce",
+    type: "slider",
+    defaultValue: 0,
+    min: 0,
+    max: 128,
+    conditions: [generalView, bounce]
+  },
   // PROJECTILES
   {
     key: "projectile",
@@ -63,25 +103,43 @@ const fields = [
     options: [
       [0, "Default"],
       [1, "Arc"],
-      [2, "Gravity"],
-      [3, "Boomerang"],
-      [4, "Sine Wave"],
-      [6, "Orbit"],
-      [5, "Custom"],
+      [2, "Boomerang"],
+      [3, "Sine Wave"],
+      [4, "Orbit"],
     ],
     defaultValue: 0,
     conditions: [defaultView],
   },
+  // arc
+  {
+    key: "arc_height",
+    label: "Height",
+    type: "slider",
+    defaultValue: 50,
+    min: 0,
+    max: 100,
+    conditions: [defaultView, arc]
+  },
+  {
+    key: "gravity",
+    label: "Gravity",
+    type: "slider",
+    defaultValue: 6,
+    min: 0,
+    max: 15,
+    conditions: [defaultView, arc]
+  },
   // boomerang
   {
     key: "distance",
-    label: "Distance",
+    label: "Resistance",
     type: "slider",
     defaultValue: 100,
-    min: 0,
-    max: 30,
+    min: 1,
+    max: 10,
     conditions: [defaultView, boomerang]
   },
+  // sine
   {
     key: "amplitude",
     label: "Amplitude",
@@ -91,7 +149,6 @@ const fields = [
     max: 127,
     conditions: [defaultView, sineWave]
   },
-  // sine
   {
     key: "frequency",
     label: "Frequency",
@@ -112,6 +169,33 @@ const fields = [
   },
   // Orbit
   {
+    key: "actor",
+    label: "Orbit Center",
+    type: "actor",
+    defaultValue: "$self$",
+    conditions: [defaultView, orbit]
+  },
+  {
+    key: "orbit_x_offset",
+    label: "X Offset",
+    type: "number",
+    defaultValue: 0,
+    min: -128,
+    max: 127,
+    width: "50%",
+    conditions: [defaultView, orbit]
+  },
+  {
+    key: "orbit_y_offset",
+    label: "Y Offset",
+    type: "number",
+    defaultValue: 0,
+    min: -128,
+    max: 127,
+    width: "50%",
+    conditions: [defaultView, orbit]
+  },
+  {
     key: "orbit_amplitude",
     label: "Amplitude",
     type: "slider",
@@ -120,7 +204,6 @@ const fields = [
     max: 127,
     conditions: [defaultView, orbit]
   },
-  // sine
   {
     key: "orbit_frequency",
     label: "Frequency",
@@ -162,9 +245,8 @@ const compile = (input, helpers) => {
   const { 
     warnings,
     engineFieldSetToValue,
-    getVariableAlias,
+    getActorIndex,
   } = helpers;
-  
 
   if (!input.projectile) {
     engineFieldSetToValue("projectile_type");
@@ -184,23 +266,42 @@ const compile = (input, helpers) => {
     engineFieldSetToValue("projectile_no_bounds", 1);
   }
 
+  if (input.collision == 0) {
+    engineFieldSetToValue("projectile_collision");
+    engineFieldSetToValue("projectile_bounce");
+  } else {
+    engineFieldSetToValue("projectile_collision", input.collision);
+    if(input.collision >= 2){
+      engineFieldSetToValue("projectile_bounce", input.bounce);
+    }
+  }
+
+  if (!input.gravity) {
+    engineFieldSetToValue("projectile_gravity");
+  } else {
+    engineFieldSetToValue("projectile_gravity", input.gravity);
+  }
+
   switch (input.projectile) {
-    case 3:
+    case 1:
+      engineFieldSetToValue("projectile_distance2", input.arc_height);
+      engineFieldSetToValue("projectile_gravity", input.gravity);
+      break;
+    case 2:
       engineFieldSetToValue("projectile_distance", input.distance);
       break;
-    case 4:
+    case 3:
       engineFieldSetToValue("projectile_amplitude", input.amplitude);
       engineFieldSetToValue("projectile_frequency", input.frequency)
       engineFieldSetToValue("projectile_phase", input.phase);
       break;
-    case 5:
-      engineFieldSetToValue("projectile_delta_x", input.varX);
-      engineFieldSetToValue("projectile_delta_y", input.varY);
-      break;
-    case 6:
+    case 4:
       engineFieldSetToValue("projectile_amplitude", input.orbit_amplitude);
       engineFieldSetToValue("projectile_frequency", input.orbit_frequency)
       engineFieldSetToValue("projectile_phase", input.orbit_phase);
+      engineFieldSetToValue("projectile_distance", input.orbit_x_offset);
+      engineFieldSetToValue("projectile_distance2", input.orbit_y_offset);
+      engineFieldSetToValue("projectile_actor", getActorIndex(input.actor));
       break;
   }
 
@@ -213,5 +314,4 @@ module.exports = {
   groups,
   fields,
   compile,
-  waitUntilAfterInitFade: true,
 };

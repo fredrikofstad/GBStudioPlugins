@@ -43,7 +43,6 @@ typedef struct actor_t
     bool movement_interrupt   : 1;
     bool persistent           : 1;
     upoint16_t pos;
-    direction_e adir;
     direction_e dir;
     bounding_box_t bounds;
     uint8_t base_tile;
@@ -141,7 +140,12 @@ typedef struct projectile_t
     uint8_t frame_end;
     projectile_def_t def;
     struct projectile_t *next;
+    BYTE x;             // used for offset and other params
+    BYTE y;             // used for offset and other params
     UBYTE dir;          // Direction
+    UBYTE type;         // Projectile type
+    BYTE gravity;       // gravity for the projectile
+    UBYTE bounce;       // bouncing height
     int8_t amplitude;   // Amplitude of the sine wave
     int8_t frequency;   // Frequency of the sine wave
     uint8_t phase;      // Current phase offset of the sine wave

@@ -1,5 +1,5 @@
-const id = "FO_EVENT_PROJECTILE_PROPERTIES";
-const name = "Projectile Properties";
+const id = "FO_EVENT_PROJECTILE_LIFETIME";
+const name = "Set Projectile Lifetime";
 const groups = ["Plugins"];
 
 
@@ -10,19 +10,12 @@ const fields = [
     label: "Infinite Lifetime",
     type: "checkbox",
     defaultValue: false,
-  },
-  {
-    key: "bounds",
-    label: "No bounds",
-    type: "checkbox",
-    defaultValue: false,
-  },
+  }
 
 ];
 
 const compile = (input, helpers) => {
   const { 
-    warnings,
     engineFieldSetToValue,
   } = helpers;
   
@@ -32,13 +25,6 @@ const compile = (input, helpers) => {
     engineFieldSetToValue("projectile_no_lifetime", 1);
   }
 
-  if (!input.bounds) {
-    engineFieldSetToValue("projectile_no_bounds");
-  } else {
-    engineFieldSetToValue("projectile_no_bounds", 1);
-  }
-
-
 };
 
 module.exports = {
@@ -47,5 +33,4 @@ module.exports = {
   groups,
   fields,
   compile,
-  waitUntilAfterInitFade: true,
 };
