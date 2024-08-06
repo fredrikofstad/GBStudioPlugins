@@ -34,4 +34,7 @@ extern UINT8 projectile_amplitude;
 extern UINT8 projectile_frequency;
 extern UINT8 projectile_phase;
 
+extern UBYTE projectile_delta_x;
+extern UBYTE projectile_delta_y;
+
 #endif

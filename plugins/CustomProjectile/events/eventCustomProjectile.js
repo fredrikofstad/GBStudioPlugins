@@ -31,6 +31,10 @@ const custom = {
   key: "projectile",
   eq: 5
 };
+const homing = {
+  key: "projectile",
+  eq: 6
+};
 
 const bounce = {
   key: "collision",
@@ -106,6 +110,8 @@ const fields = [
       [2, "Boomerang"],
       [3, "Sine Wave"],
       [4, "Orbit"],
+      [5, "Custom"],
+      //[6, "Homing"],
     ],
     defaultValue: 0,
     conditions: [defaultView],
@@ -238,6 +244,15 @@ const fields = [
     conditions: [defaultView, custom],
   },
 
+  // Homing
+  {
+    key: "actor_homing",
+    label: "Homing Target",
+    type: "actor",
+    defaultValue: "$self$",
+    conditions: [defaultView, homing]
+  },
+
 
 ];
 
@@ -247,6 +262,9 @@ const compile = (input, helpers) => {
     engineFieldSetToValue,
     getActorIndex,
   } = helpers;
+
+  warnings("lol");
+  warnings(input.varX);
 
   if (!input.projectile) {
     engineFieldSetToValue("projectile_type");
@@ -302,6 +320,13 @@ const compile = (input, helpers) => {
       engineFieldSetToValue("projectile_distance", input.orbit_x_offset);
       engineFieldSetToValue("projectile_distance2", input.orbit_y_offset);
       engineFieldSetToValue("projectile_actor", getActorIndex(input.actor));
+      break;
+    case 5:
+      engineFieldSetToValue("projectile_delta_x", input.varX);
+      engineFieldSetToValue("projectile_delta_y", input.varY);
+      break;
+    case 6:
+      engineFieldSetToValue("projectile_actor", getActorIndex(input.actor_homing));
       break;
   }
 

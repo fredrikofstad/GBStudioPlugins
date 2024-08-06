@@ -10,6 +10,7 @@
 #include "linked_list.h"
 #include "game_time.h"
 #include "vm.h"
+#include "data/game_globals.h"
 
 #define FIXED 7
 
@@ -28,13 +29,17 @@ UBYTE projectile_amplitude;
 UBYTE projectile_frequency;
 UBYTE projectile_phase;
 
+UBYTE projectile_delta_x;
+UBYTE projectile_delta_y;
+
 typedef enum {
     DEFAULT = 0,
     ARC,
     BOOMERANG,
     SINE,
+    ORBIT,
+    CUSTOM,
     //HOMING,
-    ORBIT
 } projectile_state;
 
 projectile_t projectiles[MAX_PROJECTILES];
@@ -81,20 +86,27 @@ void handle_sine(projectile_t *projectile) BANKED {
             projectile->pos.x -= sine;
             break;
     }
-    
-    
 }
 
-/*
-void handle_homing(projectile_t *projectile) NONBANKED {
-    //point_translate_angle_to_delta(&projectile->delta_pos, angle, projectile->def.move_speed);
-    int16_t dx = (projectile->pos.x - actors[projectile_target].pos.x)/8;
-    int16_t dy = (projectile->pos.y - actors[projectile_target].pos.y)/8;
+void handle_custom(projectile_t *projectile) BANKED {
+    projectile->pos.x += *(script_memory + projectile_delta_x);
+    projectile->pos.y += *(script_memory + projectile_delta_y);
+}
 
-    uint8_t angle = atan2(dx, dy);
-    point_translate_angle_to_delta(&projectile->delta_pos, angle, projectile->def.move_speed);
+// WIP
+/*
+void handle_homing(projectile_t *projectile) BANKED {
+    int16_t dx = (actors[projectile_actor].pos.x - projectile->pos.x)/128;
+    int16_t dy = (actors[projectile_actor].pos.y - projectile->pos.y)/128;
+
+    UBYTE angle = atan2(dx, dy);
+    *(script_memory + 0) = angle; // debug to see angle as first var
+    point_translate_angle_to_delta(&projectile->delta_pos, 255-angle, projectile->def.move_speed);
+    projectile->pos.x += projectile->delta_pos.x;
+    projectile->pos.y -= projectile->delta_pos.y;
 }
 */
+
 
 void handle_boomerang(projectile_t *projectile) BANKED {
 
@@ -134,6 +146,13 @@ void handle_types(projectile_t *projectile) BANKED {
         //    handle_homing(projectile);
         case ORBIT:
             handle_orbit(projectile);
+            break;
+        case CUSTOM:
+            handle_custom(projectile);
+            break;
+        case HOMING:
+            handle_homing(projectile);
+            break;
     }
 }
 
@@ -232,7 +251,7 @@ void projectiles_update(void) NONBANKED {
         } 
 
         // Move projectile
-        if(projectile->type != ORBIT){
+        if(projectile->type != CUSTOM && projectile->type != ORBIT && projectile->type != HOMING){
             projectile->pos.x += projectile->delta_pos.x;
             projectile->pos.y -= projectile->delta_pos.y;
         }

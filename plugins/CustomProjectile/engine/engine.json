@@ -91,6 +91,20 @@
       "group": "Custom Projectiles",
       "cType": "UINT8",
       "defaultValue": 0
+    },
+    {
+      "key": "projectile_delta_x",
+      "label": "Projectile's Delta X",
+      "group": "Custom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 1
+    },
+    {
+      "key": "projectile_delta_y",
+      "label": "Projectile's Delta Y",
+      "group": "Custom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 1
     }
 
   ]
