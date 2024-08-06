@@ -102,8 +102,6 @@ void handle_homing(projectile_t *projectile) BANKED {
     UBYTE angle = atan2(dx, dy);
     *(script_memory + 0) = angle; // debug to see angle as first var
     point_translate_angle_to_delta(&projectile->delta_pos, 255-angle, projectile->def.move_speed);
-    projectile->pos.x += projectile->delta_pos.x;
-    projectile->pos.y -= projectile->delta_pos.y;
 }
 */
 
@@ -150,9 +148,9 @@ void handle_types(projectile_t *projectile) BANKED {
         case CUSTOM:
             handle_custom(projectile);
             break;
-        case HOMING:
-            handle_homing(projectile);
-            break;
+        //case HOMING:
+        //    handle_homing(projectile);
+        //    break;
     }
 }
 
@@ -251,7 +249,7 @@ void projectiles_update(void) NONBANKED {
         } 
 
         // Move projectile
-        if(projectile->type != CUSTOM && projectile->type != ORBIT && projectile->type != HOMING){
+        if(projectile->type != CUSTOM && projectile->type != ORBIT){
             projectile->pos.x += projectile->delta_pos.x;
             projectile->pos.y -= projectile->delta_pos.y;
         }
