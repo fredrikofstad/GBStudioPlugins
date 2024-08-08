@@ -99,6 +99,42 @@ const fields = [
     max: 128,
     conditions: [generalView, bounce]
   },
+  {
+    key: "death",
+    label: "Update Variables on removal",
+    type: "checkbox",
+    defaultValue: false,
+    conditions: [generalView,
+      {
+        key: "projectile",
+        ne: 4
+      }
+    ]
+  },
+  {
+    key: "varX",
+    label: "Delta X of projectile",
+    type: "variable",
+    defaultValue: "LAST_VARIABLE",
+    conditions: [generalView, 
+      {
+        key: "death",
+        eq: true
+      }
+  ],
+  },
+  {
+    key: "varY",
+    label: "Delta Y of projectile",
+    type: "variable",
+    defaultValue: "LAST_VARIABLE",
+    conditions: [generalView, 
+      {
+        key: "death",
+        eq: true
+      }
+    ],
+  },
   // PROJECTILES
   {
     key: "projectile",
@@ -228,6 +264,13 @@ const fields = [
     max: 255,
     conditions: [defaultView, orbit]
   },
+  {
+    key: "launch",
+    label: "Launch Projectiles",
+    type: "checkbox",
+    defaultValue: false,
+    conditions: [defaultView, orbit],
+  },
   // Custom
   {
     key: "varX",
@@ -263,9 +306,6 @@ const compile = (input, helpers) => {
     getActorIndex,
   } = helpers;
 
-  warnings("lol");
-  warnings(input.varX);
-
   if (!input.projectile) {
     engineFieldSetToValue("projectile_type");
   } else {
@@ -300,6 +340,14 @@ const compile = (input, helpers) => {
     engineFieldSetToValue("projectile_gravity", input.gravity);
   }
 
+  if (!input.death) {
+    engineFieldSetToValue("projectile_flags");
+  } else {
+    engineFieldSetToValue("projectile_flags", 1);
+    engineFieldSetToValue("projectile_delta_x", input.varX);
+    engineFieldSetToValue("projectile_delta_y", input.varY);
+  }
+
   switch (input.projectile) {
     case 1:
       engineFieldSetToValue("projectile_distance2", input.arc_height);
@@ -320,7 +368,9 @@ const compile = (input, helpers) => {
       engineFieldSetToValue("projectile_distance", input.orbit_x_offset);
       engineFieldSetToValue("projectile_distance2", input.orbit_y_offset);
       engineFieldSetToValue("projectile_actor", getActorIndex(input.actor));
+      engineFieldSetToValue("projectile_flags", input.launch ? 1 : 0);
       break;
+
     case 5:
       engineFieldSetToValue("projectile_delta_x", input.varX);
       engineFieldSetToValue("projectile_delta_y", input.varY);

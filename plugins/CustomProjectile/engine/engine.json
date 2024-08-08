@@ -105,6 +105,14 @@
       "group": "Custom Projectiles",
       "cType": "UBYTE",
       "defaultValue": 1
+    },
+    {
+      "key": "projectile_flags",
+      "label": "Projectile Flags",
+      "group": "Custom Projectiles",
+      "type" : "number",
+      "cType": "UBYTE",
+      "defaultValue": 0
     }
 
   ]

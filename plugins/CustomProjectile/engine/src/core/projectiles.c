@@ -29,6 +29,7 @@ UBYTE projectile_amplitude;
 UBYTE projectile_frequency;
 UBYTE projectile_phase;
 
+UBYTE projectile_flags;
 UBYTE projectile_delta_x;
 UBYTE projectile_delta_y;
 
@@ -53,26 +54,17 @@ static projectile_t *prev_projectile;
 
 int16_t sine;
 int16_t cosine;
+int16_t x_offset;
+int16_t y_offset;
 
-
-void update_phase(projectile_t *projectile) BANKED {
+void update_phase(void) BANKED {
     projectile->phase += projectile->frequency;
     projectile->phase %= 256;
     sine = ((SIN(projectile->phase) * projectile->amplitude) >> FIXED) * 2;
 }
 
-void handle_orbit(projectile_t *projectile) BANKED {
-    update_phase(projectile);
-    // Calculate the new position using sine and cosine for orbit
-    cosine = ((COS(projectile->phase) * projectile->amplitude) >> FIXED) * 2;
-    
-    // Update projectile position based on center point
-    projectile->pos.x = actors[projectile_actor].pos.x + cosine + (projectile->x);
-    projectile->pos.y = actors[projectile_actor].pos.y + sine + (projectile->y);
-}
-
-void handle_sine(projectile_t *projectile) BANKED {
-    update_phase(projectile);
+void handle_sine(void) BANKED {
+    update_phase();
     
     // Update position based on the sine wave
 
@@ -88,9 +80,35 @@ void handle_sine(projectile_t *projectile) BANKED {
     }
 }
 
-void handle_custom(projectile_t *projectile) BANKED {
+void handle_custom(void) BANKED {
     projectile->pos.x += *(script_memory + projectile_delta_x);
     projectile->pos.y += *(script_memory + projectile_delta_y);
+}
+
+void handle_orbit(void) BANKED {
+    update_phase();
+    // Calculate the new position using sine and cosine for orbit
+    cosine = ((COS(projectile->phase) * projectile->amplitude) >> FIXED) * 2;   
+
+    if (projectile_flags) {
+        switch (actors[projectile_actor].dir) {
+            case DIR_RIGHT:
+                x_offset += projectile->def.move_speed;
+                break;
+            case DIR_LEFT:
+                x_offset -= projectile->def.move_speed;
+                break;
+            case DIR_UP:
+                y_offset += projectile->def.move_speed;
+                break;
+            case DIR_DOWN:
+                y_offset -= projectile->def.move_speed;
+                break;
+        }
+    }
+    // Update projectile position based on center point
+    projectile->pos.x = actors[projectile_actor].pos.x + cosine + (projectile->x) + x_offset;
+    projectile->pos.y = actors[projectile_actor].pos.y + sine + (projectile->y) + y_offset;
 }
 
 // WIP
@@ -106,7 +124,7 @@ void handle_homing(projectile_t *projectile) BANKED {
 */
 
 
-void handle_boomerang(projectile_t *projectile) BANKED {
+void handle_boomerang(void) BANKED {
 
     switch (projectile->dir) {
         case DIR_RIGHT:
@@ -125,28 +143,32 @@ void handle_boomerang(projectile_t *projectile) BANKED {
 }
 
 
+
+
 void remove_projectile(void) NONBANKED {
+    if(projectile_flags) {
+        *(script_memory + projectile_delta_x) = projectile->pos.x/16;
+        *(script_memory + projectile_delta_y) = projectile->pos.y/16;
+    }
     projectile_t *next = projectile->next;
     LL_REMOVE_ITEM(projectiles_active_head, projectile, prev_projectile);
     LL_PUSH_HEAD(projectiles_inactive_head, projectile);
     projectile = next;
 }
 
-void handle_types(projectile_t *projectile) BANKED {
+void handle_types(void) BANKED {
     switch (projectile->type) {
         case BOOMERANG:
-            handle_boomerang(projectile);
+            handle_boomerang();
             break;
         case SINE:
-            handle_sine(projectile);
+            handle_sine();
             break;
-        //case HOMING:
-        //    handle_homing(projectile);
         case ORBIT:
-            handle_orbit(projectile);
+            handle_orbit();
             break;
         case CUSTOM:
-            handle_custom(projectile);
+            handle_custom();
             break;
         //case HOMING:
         //    handle_homing(projectile);
@@ -154,7 +176,7 @@ void handle_types(projectile_t *projectile) BANKED {
     }
 }
 
-bool handle_bounce(projectile_t *projectile) BANKED {
+bool handle_bounce(void) BANKED {
     if(projectile_collision == 0){
         return false;
     }
@@ -239,8 +261,8 @@ void projectiles_update(void) NONBANKED {
             }
         
 
-            handle_types(projectile);
-            if(handle_bounce(projectile)){
+            handle_types();
+            if(handle_bounce()){
                 continue;
             }
             if(projectile->gravity){
@@ -359,14 +381,17 @@ void projectile_launch(UBYTE index, upoint16_t *pos, UBYTE angle, UBYTE flags) B
             projectile->pos.y -= ((cosv * (UINT8)(initial_offset)) >> 7);
         }
 
-        projectile->amplitude = projectile_amplitude;   // Set amplitude of sine wave
+        projectile->amplitude = projectile_amplitude;    // Set amplitude of sine wave
         projectile->frequency = projectile_frequency;    // Set frequency of sine wave
-        projectile->phase = projectile_phase;         // Starting phase for sine
-        projectile->gravity = projectile_gravity;
-        projectile->bounce = projectile_bounce;
-        projectile->x = projectile_distance;
-        projectile->y = projectile_distance2;
+        projectile->phase = projectile_phase;            // Starting phase for sine
+        projectile->gravity = projectile_gravity;        // Gravity for projectile
+        projectile->bounce = projectile_bounce;          // Bounce height 
+        projectile->x = projectile_distance;             // Used for
+        projectile->y = projectile_distance2;            // Used for
+        projectile->flags = projectile_flags;            // Used for launching orbit, or callback on removal
 
+        x_offset = 0;
+        y_offset = 0;
 
         point_translate_angle_to_delta(&projectile->delta_pos, angle, projectile->def.move_speed);
 
