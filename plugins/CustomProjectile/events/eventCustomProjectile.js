@@ -1,6 +1,16 @@
 const id = "FO_EVENT_CUSTOM_PROJECTILE";
-const groups = ["Plugins"];
+const groups = ["Projectiles"];
 const name = "Custom Projectile";
+
+const type = { 
+  default: 0,
+  arc: 1,
+  boomerang: 2,
+  sine: 3,
+  orbit: 4,
+  hookshot: 5,
+  custom: 6
+} 
 
 // conditions:
 const defaultView = {
@@ -13,32 +23,32 @@ const generalView = {
 };
 const arc = {
   key: "projectile",
-  eq: 1
+  eq: type.arc
 };
 const boomerang = {
   key: "projectile",
-  eq: 2
+  eq: type.boomerang
 };
 const sineWave = {
   key: "projectile",
-  eq: 3
+  eq: type.sine
 };
 const orbit = {
   key: "projectile",
-  eq: 4
+  eq: type.orbit
+};
+const hookshot = {
+  key: "projectile",
+  eq: type.hookshot
 };
 const custom = {
   key: "projectile",
-  eq: 5
-};
-const homing = {
-  key: "projectile",
-  eq: 6
+  eq: type.custom
 };
 
 const bounce = {
   key: "collision",
-  gte: 2
+  gte: type.boomerang
 };
 
 const fields = [
@@ -107,7 +117,7 @@ const fields = [
     conditions: [generalView,
       {
         key: "projectile",
-        ne: 4
+        ne: type.orbit
       }
     ]
   },
@@ -141,15 +151,16 @@ const fields = [
     label: "Projectile Behavior",
     type: "select",
     options: [
-      [0, "Default"],
-      [1, "Arc"],
-      [2, "Boomerang"],
-      [3, "Sine Wave"],
-      [4, "Orbit"],
-      [5, "Custom"],
+      [type.default, "Default"],
+      [type.arc, "Arc"],
+      [type.boomerang, "Boomerang"],
+      [type.sine, "Sine Wave"],
+      [type.orbit, "Orbit"],
+      [type.hookshot, "Hookshot"],
+      [type.custom, "Custom"],
       //[6, "Homing"],
     ],
-    defaultValue: 0,
+    defaultValue: type.default,
     conditions: [defaultView],
   },
   // arc
@@ -287,15 +298,6 @@ const fields = [
     conditions: [defaultView, custom],
   },
 
-  // Homing
-  {
-    key: "actor_homing",
-    label: "Homing Target",
-    type: "actor",
-    defaultValue: "$self$",
-    conditions: [defaultView, homing]
-  },
-
 
 ];
 
@@ -349,19 +351,19 @@ const compile = (input, helpers) => {
   }
 
   switch (input.projectile) {
-    case 1:
+    case type.arc:
       engineFieldSetToValue("projectile_distance2", input.arc_height);
       engineFieldSetToValue("projectile_gravity", input.gravity);
       break;
-    case 2:
+    case type.boomerang:
       engineFieldSetToValue("projectile_distance", input.distance);
       break;
-    case 3:
+    case type.sine:
       engineFieldSetToValue("projectile_amplitude", input.amplitude);
       engineFieldSetToValue("projectile_frequency", input.frequency)
       engineFieldSetToValue("projectile_phase", input.phase);
       break;
-    case 4:
+    case type.orbit:
       engineFieldSetToValue("projectile_amplitude", input.orbit_amplitude);
       engineFieldSetToValue("projectile_frequency", input.orbit_frequency)
       engineFieldSetToValue("projectile_phase", input.orbit_phase);
@@ -370,14 +372,15 @@ const compile = (input, helpers) => {
       engineFieldSetToValue("projectile_actor", getActorIndex(input.actor));
       engineFieldSetToValue("projectile_flags", input.launch ? 1 : 0);
       break;
+    case type.hookshot:
+      //hookshot
+      break;
 
-    case 5:
+    case type.custom:
       engineFieldSetToValue("projectile_delta_x", input.varX);
       engineFieldSetToValue("projectile_delta_y", input.varY);
       break;
-    case 6:
-      engineFieldSetToValue("projectile_actor", getActorIndex(input.actor_homing));
-      break;
+    
   }
 
 
