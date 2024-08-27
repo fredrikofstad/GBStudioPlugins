@@ -4,11 +4,11 @@ const name = "Load Projectile";
 
 const fields = [
     {
-		key: "spritesheet",
+		key: "spriteSheetId",
         type: "sprite",
         label: "Sprite Sheet",
         defaultValue: "LAST_SPRITE",
-    },
+        },
     {
         key: "source",
         label: "Projectile Source",
@@ -46,7 +46,14 @@ const fields = [
         type: "number",
         label: "Projectile Slot",
         defaultValue: 0,
-        min: 0,
+        type: "select",
+        options: [
+          [0, "0"],
+          [1, "1"],
+          [2, "2"],
+          [3, "3"],
+          [4, "4"],
+        ],
     },
 
 ];

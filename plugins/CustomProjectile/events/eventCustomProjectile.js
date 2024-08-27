@@ -98,7 +98,12 @@ const fields = [
       [3, "Bounce (only floor)"],
     ],
     defaultValue: 0,
-    conditions: [generalView]
+    conditions: [generalView,
+    {
+        key: "projectile",
+        ne: type.hookshot
+    }
+    ]
   },
   {
     key: "bounce",
@@ -123,7 +128,7 @@ const fields = [
   },
   {
     key: "varX",
-    label: "Delta X of projectile",
+    label: "X Position of Projectile",
     type: "variable",
     defaultValue: "LAST_VARIABLE",
     conditions: [generalView, 
@@ -135,7 +140,7 @@ const fields = [
   },
   {
     key: "varY",
-    label: "Delta Y of projectile",
+    label: "Y Position of projectile",
     type: "variable",
     defaultValue: "LAST_VARIABLE",
     conditions: [generalView, 
@@ -282,6 +287,36 @@ const fields = [
     defaultValue: false,
     conditions: [defaultView, orbit],
   },
+  // Hookshot
+  {
+    key: "hookshot_chain",
+    label: "Hookshot Chain",
+    type: "select",
+    options: [
+      [0, "Head"],
+      [1, "First chain"],
+      [2, "Second chain"],
+      [3, "Third chain"],
+    ],
+    defaultValue: 0,
+    conditions: [defaultView, hookshot]
+  },
+  {
+    key: "collision",
+    label: "Collision Behaviour",
+    type: "select",
+    options: [
+      [0, "No effect"],
+      [1, "Return"],
+    ],
+    defaultValue: 0,
+    conditions: [defaultView,
+    {
+        key: "projectile",
+        eq: type.hookshot
+    }
+    ]
+  },
   // Custom
   {
     key: "varX",
@@ -373,7 +408,8 @@ const compile = (input, helpers) => {
       engineFieldSetToValue("projectile_flags", input.launch ? 1 : 0);
       break;
     case type.hookshot:
-      //hookshot
+      warnings(input.hookshot_chain);
+      engineFieldSetToValue("projectile_distance", input.hookshot_chain);
       break;
 
     case type.custom:

@@ -8,9 +8,9 @@
 #include "gbs_types.h"
 
 #define MAX_PROJECTILES 6
-#define MAX_PROJECTILE_DEFS 6
+#define MAX_PROJECTILE_DEFS 5
 
-extern projectile_def_t projectile_defs[MAX_PROJECTILES];
+extern projectile_def_t projectile_defs[MAX_PROJECTILE_DEFS];
 
 void projectiles_init(void) BANKED;
 void projectiles_update(void) NONBANKED;
@@ -37,5 +37,7 @@ extern UINT8 projectile_phase;
 extern UBYTE projectile_flags;
 extern UBYTE projectile_delta_x;
 extern UBYTE projectile_delta_y;
+
+extern UBYTE projectile_hookshot_state;
 
 #endif

@@ -1,6 +1,6 @@
 const id = "FO_EVENT_PROJECTILE_LIFETIME";
 const name = "Set Projectile Lifetime";
-const groups = ["Plugins"];
+const groups = ["Projectiles"];
 
 
 const fields = [

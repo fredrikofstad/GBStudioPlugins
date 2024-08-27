@@ -146,6 +146,7 @@ typedef struct projectile_t
     UBYTE type;         // Projectile type
     BYTE gravity;       // gravity for the projectile
     UBYTE bounce;       // bouncing height
+    UBYTE collision;
     UBYTE flags;        // Extra flags
     int8_t amplitude;   // Amplitude of the sine wave
     int8_t frequency;   // Frequency of the sine wave

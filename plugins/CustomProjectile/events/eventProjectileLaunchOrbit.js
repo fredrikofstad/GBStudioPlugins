@@ -1,6 +1,6 @@
 const id = "FO_EVENT_PROJECTILE_LAUNCH_ORBIT";
 const name = "Launch Orbiting Projectiles";
-const groups = ["Plugins"];
+const groups = ["Projectiles"];
 
 
 const fields = [

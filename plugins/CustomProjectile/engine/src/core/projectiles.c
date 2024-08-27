@@ -33,12 +33,16 @@ UBYTE projectile_flags;
 UBYTE projectile_delta_x;
 UBYTE projectile_delta_y;
 
+UBYTE projectile_hookshot_state;
+upoint16_t head_pos;
+
 typedef enum {
     DEFAULT = 0,
     ARC,
     BOOMERANG,
     SINE,
     ORBIT,
+    HOOKSHOT,
     CUSTOM,
     //HOMING,
 } projectile_state;
@@ -51,6 +55,8 @@ projectile_t *projectiles_inactive_head;
 static UBYTE _save_bank;
 static projectile_t *projectile;
 static projectile_t *prev_projectile;
+
+bool next_projectile;
 
 int16_t sine;
 int16_t cosine;
@@ -108,7 +114,7 @@ void handle_orbit(void) BANKED {
     }
     // Update projectile position based on center point
     projectile->pos.x = actors[projectile_actor].pos.x + cosine + (projectile->x) + x_offset;
-    projectile->pos.y = actors[projectile_actor].pos.y + sine + (projectile->y) + y_offset;
+    projectile->pos.y = actors[projectile_actor].pos.y + sine + (projectile->y) - y_offset;
 }
 
 // WIP
@@ -122,6 +128,18 @@ void handle_homing(projectile_t *projectile) BANKED {
     point_translate_angle_to_delta(&projectile->delta_pos, 255-angle, projectile->def.move_speed);
 }
 */
+
+void remove_projectile(void) NONBANKED {
+    if(projectile_flags) {
+        *(script_memory + projectile_delta_x) = projectile->pos.x/16;
+        *(script_memory + projectile_delta_y) = projectile->pos.y/16;
+    }
+    projectile_t *next = projectile->next;
+    LL_REMOVE_ITEM(projectiles_active_head, projectile, prev_projectile);
+    LL_PUSH_HEAD(projectiles_inactive_head, projectile);
+    projectile = next;
+    next_projectile = true;
+}
 
 
 void handle_boomerang(void) BANKED {
@@ -142,19 +160,71 @@ void handle_boomerang(void) BANKED {
     }
 }
 
-
-
-
-void remove_projectile(void) NONBANKED {
-    if(projectile_flags) {
-        *(script_memory + projectile_delta_x) = projectile->pos.x/16;
-        *(script_memory + projectile_delta_y) = projectile->pos.y/16;
+void handle_hookshot(void) BANKED {
+    if (projectile->x != 0){
+        if(projectile_hookshot_state == 5){
+            remove_projectile();
+        } else {
+            switch (projectile->dir) {
+                case DIR_RIGHT:
+                case DIR_LEFT:
+                    switch (projectile->x){
+                    case 1: projectile->pos.x = PLAYER.pos.x + ((head_pos.x - PLAYER.pos.x)*3) / 4; break;
+                    case 2: projectile->pos.x = (head_pos.x + PLAYER.pos.x) / 2; break;
+                    case 3: projectile->pos.x = PLAYER.pos.x + ((head_pos.x - PLAYER.pos.x)) / 4; break;
+                    }     
+                    break;
+                case DIR_UP:
+                case DIR_DOWN:
+                    switch (projectile->x){
+                    case 1: projectile->pos.y = PLAYER.pos.y + ((head_pos.y - PLAYER.pos.y)*3) / 4; break;
+                    case 2: projectile->pos.y = (head_pos.y + PLAYER.pos.y) / 2; break;
+                    case 3: projectile->pos.y = PLAYER.pos.y + ((head_pos.y - PLAYER.pos.y)) / 4; break;
+                    }  
+                    break;
+                }
+        }
+    } else {
+        head_pos.x = projectile->pos.x;
+        head_pos.y = projectile->pos.y;
+        switch(projectile_hookshot_state) {
+            case 0: 
+                projectile->pos.x += projectile->delta_pos.x; 
+                projectile->pos.y -= projectile->delta_pos.y;
+                break;
+            case 1:
+                projectile->pos.x -= projectile->delta_pos.x; 
+                projectile->pos.y += projectile->delta_pos.y;
+                break;
+            case 2: 
+                PLAYER.pos.x += projectile->delta_pos.x; 
+                PLAYER.pos.y -= projectile->delta_pos.y;
+                break;
+            case 3:
+                projectile->pos.x -= projectile->delta_pos.x; 
+                projectile->pos.y += projectile->delta_pos.y;
+                actors[projectile_actor].pos.x = projectile->pos.x;
+                actors[projectile_actor].pos.y = projectile->pos.y;
+                break;
+            case 5:
+                // this is for 8px mode
+                // TODO: change for 16 and other modes
+                PLAYER.pos.x = ((PLAYER.pos.x >> 7) << 7);
+                PLAYER.pos.y = ((PLAYER.pos.y >> 7) << 7);
+                remove_projectile();
+                break;
+        }
     }
-    projectile_t *next = projectile->next;
-    LL_REMOVE_ITEM(projectiles_active_head, projectile, prev_projectile);
-    LL_PUSH_HEAD(projectiles_inactive_head, projectile);
-    projectile = next;
+   
+    
 }
+
+void change_hookshot_state(void) BANKED {
+    if(projectile_hookshot_state < 1){
+        projectile_hookshot_state = 1;
+    }
+}
+
 
 void handle_types(void) BANKED {
     switch (projectile->type) {
@@ -167,6 +237,9 @@ void handle_types(void) BANKED {
         case ORBIT:
             handle_orbit();
             break;
+        case HOOKSHOT:
+            handle_hookshot();
+            break;
         case CUSTOM:
             handle_custom();
             break;
@@ -176,24 +249,28 @@ void handle_types(void) BANKED {
     }
 }
 
-bool handle_bounce(void) BANKED {
-    if(projectile_collision == 0){
-        return false;
+void handle_bounce(void) BANKED {
+    if(projectile->collision == 0 || projectile_hookshot_state != 0){
+        return;
     }
     WORD tile_x = ((projectile->pos.x) >> FIXED) + 1;
     WORD tile_y = (projectile->pos.y) >> FIXED;
 
-    if(projectile_collision == 1){
+    if(projectile->collision == 1){
         if(tile_at(tile_x, tile_y) & COLLISION_ALL) {
-        remove_projectile();
-        return true;
+            if(projectile->type == HOOKSHOT){
+                change_hookshot_state();
+            } else {
+                remove_projectile();
+            }
+            return;
         }
     } else {
         if (tile_at(tile_x, tile_y + 1) & COLLISION_TOP) {
             projectile->delta_pos.y = projectile->bounce;
         }
 
-        if(projectile_collision == 3) return false; // if only floor collision
+        if(projectile->collision == 3) return; // if only floor collision
 
         if (tile_at(tile_x, tile_y - 1) & COLLISION_BOTTOM) {
             projectile->delta_pos.y = -projectile->bounce;
@@ -205,8 +282,6 @@ bool handle_bounce(void) BANKED {
             projectile->delta_pos.x = projectile->bounce;
         } 
     }
-    
-    return false;
 }
 
 
@@ -220,6 +295,7 @@ void projectiles_init(void) BANKED {
 void projectiles_update(void) NONBANKED {
     projectile = projectiles_active_head;
     prev_projectile = NULL;
+    next_projectile = false;
 
     _save_bank = CURRENT_BANK;
 
@@ -259,10 +335,10 @@ void projectiles_update(void) NONBANKED {
                     continue;
                 }
             }
-        
 
             handle_types();
-            if(handle_bounce()){
+            handle_bounce();
+            if (next_projectile) {
                 continue;
             }
             if(projectile->gravity){
@@ -271,7 +347,7 @@ void projectiles_update(void) NONBANKED {
         } 
 
         // Move projectile
-        if(projectile->type != CUSTOM && projectile->type != ORBIT){
+        if(projectile->type != CUSTOM && projectile->type != ORBIT && projectile->type != HOOKSHOT){
             projectile->pos.x += projectile->delta_pos.x;
             projectile->pos.y -= projectile->delta_pos.y;
         }
@@ -281,7 +357,11 @@ void projectiles_update(void) NONBANKED {
 
         if (!projectile_no_bounds && (screen_x > 160 || screen_y > 144)) {
             // Remove projectile
-            remove_projectile();
+            if(projectile->type == HOOKSHOT){
+                change_hookshot_state();
+            } else {
+                remove_projectile();
+            }
             continue;
         }
 
@@ -386,7 +466,8 @@ void projectile_launch(UBYTE index, upoint16_t *pos, UBYTE angle, UBYTE flags) B
         projectile->phase = projectile_phase;            // Starting phase for sine
         projectile->gravity = projectile_gravity;        // Gravity for projectile
         projectile->bounce = projectile_bounce;          // Bounce height 
-        projectile->x = projectile_distance;             // Used for
+        projectile->collision = projectile_collision;    // collision behaviour
+        projectile->x = projectile_distance;             // Used for hookshot chain, 
         projectile->y = projectile_distance2;            // Used for
         projectile->flags = projectile_flags;            // Used for launching orbit, or callback on removal
 
@@ -397,6 +478,8 @@ void projectile_launch(UBYTE index, upoint16_t *pos, UBYTE angle, UBYTE flags) B
 
         if(projectile->type == ARC){
             projectile->delta_pos.y = projectile->y;
+        } else if (projectile->type == HOOKSHOT){
+            projectile_hookshot_state = 0;
         }
 
         LL_REMOVE_HEAD(projectiles_inactive_head);

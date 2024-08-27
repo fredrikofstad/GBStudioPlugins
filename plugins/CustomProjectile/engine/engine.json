@@ -93,6 +93,13 @@
       "defaultValue": 0
     },
     {
+      "key": "projectile_hookshot_state",
+      "label": "Hookshot State",
+      "group": "Custom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
       "key": "projectile_delta_x",
       "label": "Projectile's Delta X",
       "group": "Custom Projectiles",
