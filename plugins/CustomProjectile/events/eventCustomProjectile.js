@@ -2,6 +2,8 @@ const id = "FO_EVENT_CUSTOM_PROJECTILE";
 const groups = ["Projectiles"];
 const name = "Custom Projectile";
 
+// anchor?
+
 const type = { 
   default: 0,
   arc: 1,
@@ -405,7 +407,7 @@ const compile = (input, helpers) => {
       engineFieldSetToValue("projectile_distance", input.orbit_x_offset);
       engineFieldSetToValue("projectile_distance2", input.orbit_y_offset);
       engineFieldSetToValue("projectile_actor", getActorIndex(input.actor));
-      engineFieldSetToValue("projectile_flags", input.launch ? 1 : 0);
+      engineFieldSetToValue("projectile_launch_orbit", input.launch ? 1 : 0);
       break;
     case type.hookshot:
       warnings(input.hookshot_chain);

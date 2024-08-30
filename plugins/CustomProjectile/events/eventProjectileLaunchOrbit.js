@@ -20,9 +20,9 @@ const compile = (input, helpers) => {
   } = helpers;
   
   if (!input.launch) {
-    engineFieldSetToValue("projectile_flags", 0);
+    engineFieldSetToValue("projectile_launch_orbit", 0);
   } else {
-    engineFieldSetToValue("projectile_flags", 1);
+    engineFieldSetToValue("projectile_launch_orbit", 1);
   }
 };
 

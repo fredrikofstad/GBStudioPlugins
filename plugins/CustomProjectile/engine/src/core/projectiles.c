@@ -30,6 +30,7 @@ UBYTE projectile_frequency;
 UBYTE projectile_phase;
 
 UBYTE projectile_flags;
+UBYTE projectile_launch_orbit;
 UBYTE projectile_delta_x;
 UBYTE projectile_delta_y;
 
@@ -96,7 +97,7 @@ void handle_orbit(void) BANKED {
     // Calculate the new position using sine and cosine for orbit
     cosine = ((COS(projectile->phase) * projectile->amplitude) >> FIXED) * 2;   
 
-    if (projectile_flags) {
+    if (projectile_launch_orbit) {
         switch (actors[projectile_actor].dir) {
             case DIR_RIGHT:
                 x_offset += projectile->def.move_speed;
@@ -130,7 +131,7 @@ void handle_homing(projectile_t *projectile) BANKED {
 */
 
 void remove_projectile(void) NONBANKED {
-    if(projectile_flags) {
+    if(projectile->flags) {
         *(script_memory + projectile_delta_x) = projectile->pos.x/16;
         *(script_memory + projectile_delta_y) = projectile->pos.y/16;
     }
@@ -250,7 +251,7 @@ void handle_types(void) BANKED {
 }
 
 void handle_bounce(void) BANKED {
-    if(projectile->collision == 0 || projectile_hookshot_state != 0){
+    if(projectile->collision == 0 || (projectile->type == HOOKSHOT && projectile_hookshot_state != 0)){
         return;
     }
     WORD tile_x = ((projectile->pos.x) >> FIXED) + 1;
@@ -330,12 +331,11 @@ void projectiles_update(void) NONBANKED {
                     script_execute(hit_actor->script.bank, hit_actor->script.ptr, &(hit_actor->hscript_hit), 1, (UWORD)(projectile->def.collision_group));
                 }
                 if (!projectile->strong) {
-                    // Remove projectile
                     remove_projectile();
                     continue;
                 }
             }
-
+            next_projectile = false;
             handle_types();
             handle_bounce();
             if (next_projectile) {
@@ -361,8 +361,8 @@ void projectiles_update(void) NONBANKED {
                 change_hookshot_state();
             } else {
                 remove_projectile();
+                continue;
             }
-            continue;
         }
 
         SWITCH_ROM(projectile->def.sprite.bank);
@@ -393,9 +393,13 @@ void projectiles_render(void) NONBANKED {
         UINT8 screen_x = ((projectile->pos.x >> 4) + 8) - draw_scroll_x,
               screen_y = ((projectile->pos.y >> 4) + 8) - draw_scroll_y;
 
-        if ((screen_x > DEVICE_SCREEN_PX_WIDTH) || (screen_y > DEVICE_SCREEN_PX_HEIGHT)) {
-            remove_projectile();
-            continue;
+        if (!projectile_no_bounds && (screen_x > DEVICE_SCREEN_PX_WIDTH) || (screen_y > DEVICE_SCREEN_PX_HEIGHT)) {
+            if(projectile->type == HOOKSHOT){
+                change_hookshot_state();
+            } else {
+                remove_projectile();
+                continue;
+            }
         }
 
         SWITCH_ROM(projectile->def.sprite.bank);
@@ -467,9 +471,9 @@ void projectile_launch(UBYTE index, upoint16_t *pos, UBYTE angle, UBYTE flags) B
         projectile->gravity = projectile_gravity;        // Gravity for projectile
         projectile->bounce = projectile_bounce;          // Bounce height 
         projectile->collision = projectile_collision;    // collision behaviour
-        projectile->x = projectile_distance;             // Used for hookshot chain, 
-        projectile->y = projectile_distance2;            // Used for
-        projectile->flags = projectile_flags;            // Used for launching orbit, or callback on removal
+        projectile->x = projectile_distance;             // Used for hookshot chain, orbital offset x
+        projectile->y = projectile_distance2;            // Used for orbital offset y
+        projectile->flags = projectile_flags;            // callback on removal
 
         x_offset = 0;
         y_offset = 0;

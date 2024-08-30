@@ -120,6 +120,14 @@
       "type" : "number",
       "cType": "UBYTE",
       "defaultValue": 0
+    },
+    {
+      "key": "projectile_launch_orbit",
+      "label": "Launch Orbit",
+      "group": "Custom Projectiles",
+      "type" : "number",
+      "cType": "UBYTE",
+      "defaultValue": 0
     }
 
   ]
