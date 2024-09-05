@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "data_manager.h": "c"
+        "data_manager.h": "c",
+        "gbs_types.h": "c"
     }
 }

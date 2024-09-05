@@ -124,7 +124,7 @@ const fields = [
     conditions: [generalView,
       {
         key: "projectile",
-        ne: type.orbit
+        ne: type.custom
       }
     ]
   },
@@ -321,14 +321,14 @@ const fields = [
   },
   // Custom
   {
-    key: "varX",
+    key: "customX",
     label: "Delta X of projectile",
     type: "variable",
     defaultValue: "LAST_VARIABLE",
     conditions: [defaultView, custom],
   },
   {
-    key: "varY",
+    key: "customY",
     label: "Delta Y of projectile",
     type: "variable",
     defaultValue: "LAST_VARIABLE",
@@ -410,13 +410,12 @@ const compile = (input, helpers) => {
       engineFieldSetToValue("projectile_launch_orbit", input.launch ? 1 : 0);
       break;
     case type.hookshot:
-      warnings(input.hookshot_chain);
       engineFieldSetToValue("projectile_distance", input.hookshot_chain);
       break;
 
     case type.custom:
-      engineFieldSetToValue("projectile_delta_x", input.varX);
-      engineFieldSetToValue("projectile_delta_y", input.varY);
+      engineFieldSetToValue("projectile_delta_x", input.customX);
+      engineFieldSetToValue("projectile_delta_y", input.customY);
       break;
     
   }

@@ -219,15 +219,14 @@ const compile = (input, helpers) => {
     let sceneName;
 
     if(input.source === 0){
-        sceneName = scenes.find((s) => s.id === input.scene).symbol;
+        sceneName = scenes.find((s) => s.id === input.scene).symbol + "_projectiles";
     } else {
         sceneName = input.fileName;
         if (input.tilemap === undefined) warnings("Did you remember to write the filename of the projectile?");
     }
-    warnings(sceneName);
-    warnings(`VM_PROJECTILE_LOAD_TYPE ${projectileIndex}, ___bank_${sceneName}_projectiles, _${sceneName}_projectiles`);
+    warnings("lol");
     _addComment("Load Projectile Type");
-    appendRaw(`VM_PROJECTILE_LOAD_TYPE ${projectileIndex}, ___bank_${sceneName}_projectiles, _${sceneName}_projectiles`);
+    appendRaw(`VM_PROJECTILE_LOAD_TYPE ${projectileIndex}, ___bank_${sceneName}, _${sceneName}`);
   
     actorSetActive(input.actorId);
   

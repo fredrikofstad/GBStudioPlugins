@@ -89,7 +89,7 @@ void handle_sine(void) BANKED {
 
 void handle_custom(void) BANKED {
     projectile->pos.x += *(script_memory + projectile_delta_x);
-    projectile->pos.y += *(script_memory + projectile_delta_y);
+    projectile->pos.y -= *(script_memory + projectile_delta_y);
 }
 
 void handle_orbit(void) BANKED {
