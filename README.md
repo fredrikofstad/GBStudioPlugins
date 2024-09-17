@@ -39,6 +39,8 @@ Not currently released but available on github
 
 ## Cutsom Projectile
 
+https://nokotin.itch.io/custom-projectile-plugin
+
 This plugin allows the user to further customize projectiles. You can choose between several presets including: Sine wave, Orbiting, Boomerang, Arc, and further customize the parameters in built-in events.
 
 
