@@ -39,7 +39,7 @@ Not currently released but available on github
 
 ## Cutsom Projectile
 
-Not currently released but available on github
+This plugin allows the user to further customize projectiles. You can choose between several presets including: Sine wave, Orbiting, Boomerang, Arc, and further customize the parameters in built-in events.
 
 
 
