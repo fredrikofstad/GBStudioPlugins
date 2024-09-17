@@ -1,0 +1,135 @@
+{
+  "version": "4.2.0-e1",
+
+  "fields": [
+    {
+      "key": "projectile_type",
+      "label": "Custom Projectile Type",
+      "group": "Custom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_no_lifetime",
+      "label": "Inifinite Lifetime",
+      "group": "Custom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_no_bounds",
+      "label": "No Bounds",
+      "group": "Custom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_collision",
+      "label": "Collision Behaviour",
+      "group": "Custom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_bounce",
+      "label": "Bounce",
+      "group": "Custom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_gravity",
+      "label": "Gravity",
+      "group": "Custom Projectiles",
+      "cType": "BYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_actor",
+      "label": "Actor ID",
+      "group": "Custom Projectiles",
+      "type" : "number",
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_distance",
+      "label": "Distance of Boomerang",
+      "group": "Custom Projectiles",
+      "type" : "number",
+      "cType": "BYTE",
+      "defaultValue": 6
+    },
+    {
+      "key": "projectile_distance2",
+      "label": "Second distance paramter",
+      "group": "Custom Projectiles",
+      "type" : "number",
+      "cType": "BYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_amplitude",
+      "label": "Amplitude of Sine Wave",
+      "type" : "number",
+      "group": "Custom Projectiles",
+      "cType": "UINT8",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_frequency",
+      "label": "Amplitude of Sine Wave",
+      "type" : "number",
+      "group": "Custom Projectiles",
+      "cType": "UINT8",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_phase",
+      "label": "Amplitude of Sine Wave",
+      "type" : "number",
+      "group": "Custom Projectiles",
+      "cType": "UINT8",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_hookshot_state",
+      "label": "Hookshot State",
+      "group": "Custom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_delta_x",
+      "label": "Projectile's Delta X",
+      "group": "Custom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 1
+    },
+    {
+      "key": "projectile_delta_y",
+      "label": "Projectile's Delta Y",
+      "group": "Custom Projectiles",
+      "cType": "UBYTE",
+      "defaultValue": 1
+    },
+    {
+      "key": "projectile_flags",
+      "label": "Projectile Flags",
+      "group": "Custom Projectiles",
+      "type" : "number",
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_launch_orbit",
+      "label": "Launch Orbit",
+      "group": "Custom Projectiles",
+      "type" : "number",
+      "cType": "UBYTE",
+      "defaultValue": 0
+    }
+
+  ]
+}
+
