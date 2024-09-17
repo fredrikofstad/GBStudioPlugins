@@ -194,7 +194,7 @@ const fields = [
     key: "distance",
     label: "Resistance",
     type: "slider",
-    defaultValue: 100,
+    defaultValue: 2,
     min: 1,
     max: 10,
     conditions: [defaultView, boomerang]
@@ -204,7 +204,7 @@ const fields = [
     key: "amplitude",
     label: "Amplitude",
     type: "slider",
-    defaultValue: 100,
+    defaultValue: 30,
     min: 0,
     max: 127,
     conditions: [defaultView, sineWave]
@@ -213,7 +213,7 @@ const fields = [
     key: "frequency",
     label: "Frequency",
     type: "slider",
-    defaultValue: 20,
+    defaultValue: 10,
     min: 1,
     max: 100,
     conditions: [defaultView, sineWave]

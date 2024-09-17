@@ -10,7 +10,6 @@
 #include "linked_list.h"
 #include "game_time.h"
 #include "vm.h"
-#include "data/game_globals.h"
 
 #define FIXED 7
 
@@ -74,7 +73,6 @@ void handle_sine(void) BANKED {
     update_phase();
     
     // Update position based on the sine wave
-
     switch (projectile->dir) {
         case DIR_RIGHT:
         case DIR_LEFT:
@@ -302,7 +300,6 @@ void projectiles_update(void) NONBANKED {
 
     while (projectile) {
         if (projectile->def.life_time == 0) {
-            // Remove projectile
             remove_projectile();
             continue;
         }
