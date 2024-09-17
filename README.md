@@ -10,7 +10,7 @@ Swap Tiles: https://nokotin.itch.io/tile-swap-plugin-for-gb-studio
 
 UI Plugin Pack:
 
-Custom Projectile:
+Custom Projectile: https://nokotin.itch.io/custom-projectile-plugin
 
 ## How to install
 
