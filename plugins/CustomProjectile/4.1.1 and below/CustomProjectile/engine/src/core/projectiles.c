@@ -43,6 +43,7 @@ typedef enum {
     SINE,
     ORBIT,
     HOOKSHOT,
+    ANCHOR,
     CUSTOM,
     //HOMING,
 } projectile_state;
@@ -224,6 +225,30 @@ void change_hookshot_state(void) BANKED {
     }
 }
 
+void handle_anchor(void) BANKED {
+    x_offset += projectile->delta_pos.x;
+    x_offset += projectile->delta_pos.y;
+    switch (actors[projectile_actor].dir) {
+            case DIR_RIGHT:
+                projectile->pos.x = actors[projectile_actor].pos.x + projectile->x + x_offset;
+                projectile->pos.y = actors[projectile_actor].pos.y;
+                break;
+            case DIR_LEFT:
+                projectile->pos.x = actors[projectile_actor].pos.x - projectile->x - x_offset;
+                projectile->pos.y = actors[projectile_actor].pos.y;
+                break;
+            case DIR_UP:
+                projectile->pos.y = actors[projectile_actor].pos.y + projectile->y - x_offset;
+                projectile->pos.x = actors[projectile_actor].pos.x;
+                break;
+            case DIR_DOWN:
+                projectile->pos.y = actors[projectile_actor].pos.y - projectile->y + x_offset;
+                projectile->pos.x = actors[projectile_actor].pos.x;
+                break;
+        }
+    
+}
+
 
 void handle_types(void) BANKED {
     switch (projectile->type) {
@@ -239,6 +264,8 @@ void handle_types(void) BANKED {
         case HOOKSHOT:
             handle_hookshot();
             break;
+        case ANCHOR:
+            handle_anchor();
         case CUSTOM:
             handle_custom();
             break;
@@ -249,39 +276,13 @@ void handle_types(void) BANKED {
 }
 
 void handle_bounce(void) BANKED {
-    if(projectile->collision == 0 || (projectile->type == HOOKSHOT && projectile_hookshot_state != 0)){
-        return;
-    }
     WORD tile_x = ((projectile->pos.x) >> FIXED) + 1;
     WORD tile_y = (projectile->pos.y) >> FIXED;
-
-    if(projectile->collision == 1){
-        if(tile_at(tile_x, tile_y) & COLLISION_ALL) {
-            if(projectile->type == HOOKSHOT){
-                change_hookshot_state();
-            } else {
-                remove_projectile();
-            }
-            return;
-        }
-    } else {
-        if (tile_at(tile_x, tile_y + 1) & COLLISION_TOP) {
-            projectile->delta_pos.y = projectile->bounce;
-        }
-
-        if(projectile->collision == 3) return; // if only floor collision
-
-        if (tile_at(tile_x, tile_y - 1) & COLLISION_BOTTOM) {
-            projectile->delta_pos.y = -projectile->bounce;
-        }
-        if (tile_at(tile_x + 1, tile_y) & COLLISION_RIGHT) {
-            projectile->delta_pos.x = -projectile->bounce;
-        }
-        if (tile_at(tile_x - 1, tile_y) & COLLISION_LEFT) {
-            projectile->delta_pos.x = projectile->bounce;
-        } 
+    if(tile_at(tile_x, tile_y) & COLLISION_ALL) {
+        remove_projectile();
     }
 }
+
 
 
 void projectiles_init(void) BANKED {
@@ -344,7 +345,8 @@ void projectiles_update(void) NONBANKED {
         } 
 
         // Move projectile
-        if(projectile->type != CUSTOM && projectile->type != ORBIT && projectile->type != HOOKSHOT){
+        // consider making a better check not relying on hard-coded numbers
+        if(projectile->type <= 3){
             projectile->pos.x += projectile->delta_pos.x;
             projectile->pos.y -= projectile->delta_pos.y;
         }
@@ -361,6 +363,8 @@ void projectiles_update(void) NONBANKED {
                 continue;
             }
         }
+
+
 
         SWITCH_ROM(projectile->def.sprite.bank);
         spritesheet_t *sprite = projectile->def.sprite.ptr;
@@ -477,10 +481,18 @@ void projectile_launch(UBYTE index, upoint16_t *pos, UBYTE angle, UBYTE flags) B
 
         point_translate_angle_to_delta(&projectile->delta_pos, angle, projectile->def.move_speed);
 
-        if(projectile->type == ARC){
-            projectile->delta_pos.y = projectile->y;
-        } else if (projectile->type == HOOKSHOT){
-            projectile_hookshot_state = 0;
+        switch (projectile->type) {
+            case ARC:
+                projectile->delta_pos.y = projectile->y;
+                break;
+            case HOOKSHOT:
+                projectile_hookshot_state = 0;
+                break;
+            case ANCHOR:
+            //replace with abs, if i can find it..
+                projectile->delta_pos.x = (projectile->delta_pos.x < 0) ? -projectile->delta_pos.x : projectile->delta_pos.x;
+                projectile->delta_pos.y = (projectile->delta_pos.y < 0) ? -projectile->delta_pos.y : projectile->delta_pos.y;
+                break;
         }
 
         LL_REMOVE_HEAD(projectiles_inactive_head);

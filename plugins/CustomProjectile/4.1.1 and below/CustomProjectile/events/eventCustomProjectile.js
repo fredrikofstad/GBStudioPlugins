@@ -11,7 +11,8 @@ const type = {
   sine: 3,
   orbit: 4,
   hookshot: 5,
-  custom: 6
+  anchor: 6,
+  custom: 7
 } 
 
 // conditions:
@@ -42,6 +43,10 @@ const orbit = {
 const hookshot = {
   key: "projectile",
   eq: type.hookshot
+};
+const anchor = {
+  key: "projectile",
+  eq: type.anchor
 };
 const custom = {
   key: "projectile",
@@ -164,6 +169,7 @@ const fields = [
       [type.sine, "Sine Wave"],
       [type.orbit, "Orbit"],
       [type.hookshot, "Hookshot"],
+      [type.anchor, "Anchor"],
       [type.custom, "Custom"],
       //[6, "Homing"],
     ],
@@ -319,6 +325,34 @@ const fields = [
     }
     ]
   },
+  // Anchor
+  {
+    key: "actor",
+    label: "Anchor projectile to:",
+    type: "actor",
+    defaultValue: "$self$",
+    conditions: [defaultView, anchor]
+  },
+  {
+    key: "orbit_x_offset",
+    label: "X Offset",
+    type: "number",
+    defaultValue: 0,
+    min: -128,
+    max: 127,
+    width: "50%",
+    conditions: [defaultView, anchor]
+  },
+  {
+    key: "orbit_y_offset",
+    label: "Y Offset",
+    type: "number",
+    defaultValue: 0,
+    min: -128,
+    max: 127,
+    width: "50%",
+    conditions: [defaultView, anchor]
+  },
   // Custom
   {
     key: "customX",
@@ -411,6 +445,12 @@ const compile = (input, helpers) => {
       break;
     case type.hookshot:
       engineFieldSetToValue("projectile_distance", input.hookshot_chain);
+      break;
+    
+    case type.anchor:
+      engineFieldSetToValue("projectile_actor", getActorIndex(input.actor));
+      engineFieldSetToValue("projectile_distance", input.orbit_x_offset);
+      engineFieldSetToValue("projectile_distance2", input.orbit_y_offset);
       break;
 
     case type.custom:
