@@ -6,6 +6,30 @@
       "key": "projectile_type",
       "label": "Custom Projectile Type",
       "group": "Custom Projectiles",
+      "type": "select",
+      "options": [
+        [0, "Default"],
+        [1, "Arc"],
+        [2, "Boomerang"],
+        [3, "Sine Wave"],
+        [4, "Orbit"],
+        [5, "Hookshot"],
+        [6, "Anchor"],
+        [7, "Custom"]
+      ],
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_pause",
+      "label": "Pause All Projectiles",
+      "group": "Custom Projectiles",
+      "type": "select",
+      "options": [
+        [0, "Off"],
+        [1, "Pause All Projectiles"],
+        [2, "Pause on Locked Script"]
+      ],
       "cType": "UBYTE",
       "defaultValue": 0
     },
@@ -13,12 +37,22 @@
       "key": "projectile_no_lifetime",
       "label": "Inifinite Lifetime",
       "group": "Custom Projectiles",
+      "type": "select",
+      "options": [
+        [0, "Default"],
+        [1, "Infinite Lifetime"]
+      ],
       "cType": "UBYTE",
       "defaultValue": 0
     },
     {
       "key": "projectile_no_bounds",
       "label": "No Bounds",
+      "type": "select",
+      "options": [
+        [0, "Default"],
+        [1, "No Bounds"]
+      ],
       "group": "Custom Projectiles",
       "cType": "UBYTE",
       "defaultValue": 0
@@ -27,6 +61,13 @@
       "key": "projectile_collision",
       "label": "Collision Behaviour",
       "group": "Custom Projectiles",
+      "type": "select",
+      "options": [
+        [0, "No effect"],
+        [1, "Remove Projectile"],
+        [2, "Bounce"],
+        [3, "Bounce (only floor)"]
+    ],
       "cType": "UBYTE",
       "defaultValue": 0
     },
@@ -34,6 +75,9 @@
       "key": "projectile_bounce",
       "label": "Bounce",
       "group": "Custom Projectiles",
+      "type": "slider",
+      "min": 0,
+      "max": 128,
       "cType": "UBYTE",
       "defaultValue": 0
     },
@@ -41,6 +85,9 @@
       "key": "projectile_gravity",
       "label": "Gravity",
       "group": "Custom Projectiles",
+      "type": "slider",
+      "min": -15,
+      "max": 15,
       "cType": "BYTE",
       "defaultValue": 0
     },
@@ -96,6 +143,14 @@
       "key": "projectile_hookshot_state",
       "label": "Hookshot State",
       "group": "Custom Projectiles",
+      "type": "select",
+      "options": [
+        [0, "Firing"],
+        [1, "Returning"],
+        [2, "Pull Player"],
+        [3, "Pull Actor"],
+        [5, "Remove"]
+      ],
       "cType": "UBYTE",
       "defaultValue": 0
     },
@@ -103,6 +158,7 @@
       "key": "projectile_delta_x",
       "label": "Projectile's Delta X",
       "group": "Custom Projectiles",
+      "type" : "number",
       "cType": "UBYTE",
       "defaultValue": 1
     },
@@ -110,6 +166,7 @@
       "key": "projectile_delta_y",
       "label": "Projectile's Delta Y",
       "group": "Custom Projectiles",
+      "type" : "number",
       "cType": "UBYTE",
       "defaultValue": 1
     },
