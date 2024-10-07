@@ -21,6 +21,7 @@ void projectiles_render(void) NONBANKED;
 
 void projectile_launch(UBYTE index, upoint16_t *pos, UBYTE angle, UBYTE flags) BANKED;
 extern UBYTE projectile_type;
+extern UBYTE projectile_pause;
 extern UBYTE projectile_no_lifetime;
 extern UBYTE projectile_no_bounds;
 extern UBYTE projectile_collision;

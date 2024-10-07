@@ -331,7 +331,7 @@ const fields = [
     label: "Anchor projectile to:",
     type: "actor",
     defaultValue: "$self$",
-    conditions: [defaultView, anchor]
+    conditions: [defaultView, anchor],
   },
   {
     key: "orbit_x_offset",
@@ -341,7 +341,7 @@ const fields = [
     min: -128,
     max: 127,
     width: "50%",
-    conditions: [defaultView, anchor]
+    conditions: [defaultView, anchor],
   },
   {
     key: "orbit_y_offset",
@@ -351,7 +351,16 @@ const fields = [
     min: -128,
     max: 127,
     width: "50%",
-    conditions: [defaultView, anchor]
+    conditions: [defaultView, anchor],
+  },
+  {
+    key: "dir_offset",
+    label: "Directional Offset",
+    type: "number",
+    defaultValue: 0,
+    min: 0,
+    max: 255,
+    conditions: [defaultView, anchor],
   },
   // Custom
   {
@@ -451,6 +460,7 @@ const compile = (input, helpers) => {
       engineFieldSetToValue("projectile_actor", getActorIndex(input.actor));
       engineFieldSetToValue("projectile_distance", input.orbit_x_offset);
       engineFieldSetToValue("projectile_distance2", input.orbit_y_offset);
+      engineFieldSetToValue("projectile_phase", input.dir_offset);
       break;
 
     case type.custom:
