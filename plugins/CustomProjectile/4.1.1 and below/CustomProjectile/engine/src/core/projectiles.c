@@ -14,8 +14,8 @@
 #define FIXED 7
 
 UBYTE projectile_type;
-UBYTE projectile_pause;
 UBYTE projectile_no_lifetime;
+UBYTE projectile_pause;
 UBYTE projectile_no_bounds;
 UBYTE projectile_collision;
 UBYTE projectile_bounce;
@@ -64,6 +64,9 @@ int16_t sine;
 int16_t cosine;
 int16_t x_offset;
 int16_t y_offset;
+
+UBYTE script_bank;
+UBYTE *script_address;
 
 void update_phase(void) BANKED {
     projectile->phase += projectile->frequency;
@@ -131,9 +134,11 @@ void handle_homing(projectile_t *projectile) BANKED {
 */
 
 void remove_projectile(void) NONBANKED {
-    if(projectile->flags) {
+    if(projectile->flags == 1) {
         *(script_memory + projectile_delta_x) = projectile->pos.x/16;
         *(script_memory + projectile_delta_y) = projectile->pos.y/16;
+    } else if(projectile->flags == 2){
+        script_execute(script_bank, script_address, 0, 0);
     }
     projectile_t *next = projectile->next;
     LL_REMOVE_ITEM(projectiles_active_head, projectile, prev_projectile);
@@ -278,10 +283,37 @@ void handle_types(void) BANKED {
 }
 
 void handle_bounce(void) BANKED {
+    if(projectile->collision == 0 || (projectile->type == HOOKSHOT && projectile_hookshot_state != 0)){
+        return;
+    }
     WORD tile_x = ((projectile->pos.x) >> FIXED) + 1;
     WORD tile_y = (projectile->pos.y) >> FIXED;
-    if(tile_at(tile_x, tile_y) & COLLISION_ALL) {
-        remove_projectile();
+
+    if(projectile->collision == 1){
+        if(tile_at(tile_x, tile_y) & COLLISION_ALL) {
+            if(projectile->type == HOOKSHOT){
+                change_hookshot_state();
+            } else {
+                remove_projectile();
+            }
+            return;
+        }
+    } else {
+        if (tile_at(tile_x, tile_y + 1) & COLLISION_TOP) {
+            projectile->delta_pos.y = projectile->bounce;
+        }
+
+        if(projectile->collision == 3) return; // if only floor collision
+
+        if (tile_at(tile_x, tile_y - 1) & COLLISION_BOTTOM) {
+            projectile->delta_pos.y = -projectile->bounce;
+        }
+        if (tile_at(tile_x + 1, tile_y) & COLLISION_RIGHT) {
+            projectile->delta_pos.x = -projectile->bounce;
+        }
+        if (tile_at(tile_x - 1, tile_y) & COLLISION_LEFT) {
+            projectile->delta_pos.x = projectile->bounce;
+        } 
     }
 }
 
@@ -507,4 +539,11 @@ void projectile_launch(UBYTE index, upoint16_t *pos, UBYTE angle, UBYTE flags) B
         LL_REMOVE_HEAD(projectiles_inactive_head);
         LL_PUSH_HEAD(projectiles_active_head, projectile);
     }
+}
+                    
+void set_removal_script(SCRIPT_CTX * THIS) OLDCALL BANKED {
+    UBYTE *bank = VM_REF_TO_PTR(FN_ARG1);
+    UBYTE **ptr = VM_REF_TO_PTR(FN_ARG0);
+    script_bank = *bank;
+    script_address = *ptr;
 }

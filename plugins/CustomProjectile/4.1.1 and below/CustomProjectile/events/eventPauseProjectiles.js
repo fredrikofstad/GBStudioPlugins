@@ -1,3 +1,5 @@
+// Based on NukeOTron's pause projectile plugin for locked scripts
+
 const id = "FO_EVENT_PAUSE_PROJECTILES";
 const name = "Pause Projectiles";
 const groups = ["Projectiles"];
