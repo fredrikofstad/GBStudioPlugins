@@ -15,6 +15,7 @@
 
 UBYTE projectile_type;
 UBYTE projectile_no_lifetime;
+UBYTE projectile_pause;
 UBYTE projectile_no_bounds;
 UBYTE projectile_collision;
 UBYTE projectile_bounce;
@@ -43,6 +44,7 @@ typedef enum {
     SINE,
     ORBIT,
     HOOKSHOT,
+    ANCHOR,
     CUSTOM,
     //HOMING,
 } projectile_state;
@@ -62,6 +64,9 @@ int16_t sine;
 int16_t cosine;
 int16_t x_offset;
 int16_t y_offset;
+
+UBYTE script_bank;
+UBYTE *script_address;
 
 void update_phase(void) BANKED {
     projectile->phase += projectile->frequency;
@@ -129,9 +134,11 @@ void handle_homing(projectile_t *projectile) BANKED {
 */
 
 void remove_projectile(void) NONBANKED {
-    if(projectile->flags) {
+    if(projectile->flags == 1) {
         *(script_memory + projectile_delta_x) = projectile->pos.x/16;
         *(script_memory + projectile_delta_y) = projectile->pos.y/16;
+    } else if(projectile->flags == 2){
+        script_execute(script_bank, script_address, 0, 0);
     }
     projectile_t *next = projectile->next;
     LL_REMOVE_ITEM(projectiles_active_head, projectile, prev_projectile);
@@ -224,6 +231,31 @@ void change_hookshot_state(void) BANKED {
     }
 }
 
+void handle_anchor(void) BANKED {
+    // consider using launch projectile offsets
+    x_offset += projectile->delta_pos.x;
+    x_offset += projectile->delta_pos.y;
+    switch (actors[projectile_actor].dir) {
+            case DIR_RIGHT:
+                projectile->pos.x = actors[projectile_actor].pos.x + (projectile->phase) +  projectile->x + x_offset;
+                projectile->pos.y = actors[projectile_actor].pos.y;
+                break;
+            case DIR_LEFT:
+                projectile->pos.x = actors[projectile_actor].pos.x - projectile->x - (projectile->phase) - x_offset;
+                projectile->pos.y = actors[projectile_actor].pos.y;
+                break;
+            case DIR_UP:
+                projectile->pos.y = actors[projectile_actor].pos.y + projectile->y - (projectile->phase) - x_offset;
+                projectile->pos.x = actors[projectile_actor].pos.x;
+                break;
+            case DIR_DOWN:
+                projectile->pos.y = actors[projectile_actor].pos.y - projectile->y + (projectile->phase) + x_offset;
+                projectile->pos.x = actors[projectile_actor].pos.x;
+                break;
+        }
+    
+}
+
 
 void handle_types(void) BANKED {
     switch (projectile->type) {
@@ -239,6 +271,8 @@ void handle_types(void) BANKED {
         case HOOKSHOT:
             handle_hookshot();
             break;
+        case ANCHOR:
+            handle_anchor();
         case CUSTOM:
             handle_custom();
             break;
@@ -284,11 +318,19 @@ void handle_bounce(void) BANKED {
 }
 
 
+
 void projectiles_init(void) BANKED {
     projectiles_active_head = projectiles_inactive_head = NULL;
     for (projectile_t * proj = projectiles; proj < (projectiles + MAX_PROJECTILES); ++proj) {
         LL_PUSH_HEAD(projectiles_inactive_head, proj);
     }
+}
+
+bool check_stop(void) NONBANKED {
+    if(!projectile_pause) return false;
+    if (projectile_pause == 1) return true;
+    else if (projectile_pause == 2 && VM_ISLOCKED()) return true;
+    return false;
 }
 
 void projectiles_update(void) NONBANKED {
@@ -299,54 +341,57 @@ void projectiles_update(void) NONBANKED {
     _save_bank = CURRENT_BANK;
 
     while (projectile) {
-        if (projectile->def.life_time == 0) {
-            remove_projectile();
-            continue;
-        }
-        if(!projectile_no_lifetime){
-            projectile->def.life_time--;
-        }
-
-        // Check reached animation tick frame
-        if ((game_time & projectile->def.anim_tick) == 0) {
-            projectile->frame++;
-            // Check reached end of animation
-            if (projectile->frame == projectile->frame_end) {
-                if (!projectile->anim_noloop) {
-                    projectile->frame = projectile->frame_start;
-                } else {
-                    projectile->frame--;
-                }
-            }
-        }
-
-        if (IS_FRAME_EVEN) {
-            actor_t *hit_actor = actor_overlapping_bb(&projectile->def.bounds, &projectile->pos, NULL, FALSE);
-            if (hit_actor && (hit_actor->collision_group & projectile->def.collision_mask)) {
-                // Hit! - Fire collision script here
-                if ((hit_actor->script.bank) && (hit_actor->hscript_hit & SCRIPT_TERMINATED)) {
-                    script_execute(hit_actor->script.bank, hit_actor->script.ptr, &(hit_actor->hscript_hit), 1, (UWORD)(projectile->def.collision_group));
-                }
-                if (!projectile->strong) {
-                    remove_projectile();
-                    continue;
-                }
-            }
-            next_projectile = false;
-            handle_types();
-            handle_bounce();
-            if (next_projectile) {
+        if (!check_stop()) {
+            if (projectile->def.life_time == 0) {
+                remove_projectile();
                 continue;
             }
-            if(projectile->gravity){
-                projectile->delta_pos.y -= projectile->gravity;
+            if(!projectile_no_lifetime){
+                projectile->def.life_time--;
             }
-        } 
 
-        // Move projectile
-        if(projectile->type != CUSTOM && projectile->type != ORBIT && projectile->type != HOOKSHOT){
-            projectile->pos.x += projectile->delta_pos.x;
-            projectile->pos.y -= projectile->delta_pos.y;
+            // Check reached animation tick frame
+            if ((game_time & projectile->def.anim_tick) == 0) {
+                projectile->frame++;
+                // Check reached end of animation
+                if (projectile->frame == projectile->frame_end) {
+                    if (!projectile->anim_noloop) {
+                        projectile->frame = projectile->frame_start;
+                    } else {
+                        projectile->frame--;
+                    }
+                }
+            }
+
+            if (IS_FRAME_EVEN) {
+                actor_t *hit_actor = actor_overlapping_bb(&projectile->def.bounds, &projectile->pos, NULL, FALSE);
+                if (hit_actor && (hit_actor->collision_group & projectile->def.collision_mask)) {
+                    // Hit! - Fire collision script here
+                    if ((hit_actor->script.bank) && (hit_actor->hscript_hit & SCRIPT_TERMINATED)) {
+                        script_execute(hit_actor->script.bank, hit_actor->script.ptr, &(hit_actor->hscript_hit), 1, (UWORD)(projectile->def.collision_group));
+                    }
+                    if (!projectile->strong) {
+                        remove_projectile();
+                        continue;
+                    }
+                }
+                next_projectile = false;
+                handle_types();
+                handle_bounce();
+                if (next_projectile) {
+                    continue;
+                }
+                if(projectile->gravity){
+                    projectile->delta_pos.y -= projectile->gravity;
+                }
+            } 
+
+            // Move projectile
+            // consider making a better check not relying on hard-coded numbers
+            if(projectile->type <= 3){
+                projectile->pos.x += projectile->delta_pos.x;
+                projectile->pos.y -= projectile->delta_pos.y;
+            }
         }
 
         UBYTE screen_x = (projectile->pos.x >> 4) - draw_scroll_x + 8,
@@ -464,7 +509,7 @@ void projectile_launch(UBYTE index, point16_t *pos, UBYTE angle, UBYTE flags) BA
 
         projectile->amplitude = projectile_amplitude;    // Set amplitude of sine wave
         projectile->frequency = projectile_frequency;    // Set frequency of sine wave
-        projectile->phase = projectile_phase;            // Starting phase for sine
+        projectile->phase = projectile_phase;            // Starting phase for sine, offset for anchor
         projectile->gravity = projectile_gravity;        // Gravity for projectile
         projectile->bounce = projectile_bounce;          // Bounce height 
         projectile->collision = projectile_collision;    // collision behaviour
@@ -477,13 +522,28 @@ void projectile_launch(UBYTE index, point16_t *pos, UBYTE angle, UBYTE flags) BA
 
         point_translate_angle_to_delta(&projectile->delta_pos, angle, projectile->def.move_speed);
 
-        if(projectile->type == ARC){
-            projectile->delta_pos.y = projectile->y;
-        } else if (projectile->type == HOOKSHOT){
-            projectile_hookshot_state = 0;
+        switch (projectile->type) {
+            case ARC:
+                projectile->delta_pos.y = projectile->y;
+                break;
+            case HOOKSHOT:
+                projectile_hookshot_state = 0;
+                break;
+            case ANCHOR:
+            //replace with abs, if i can find it..
+                projectile->delta_pos.x = (projectile->delta_pos.x < 0) ? -projectile->delta_pos.x : projectile->delta_pos.x;
+                projectile->delta_pos.y = (projectile->delta_pos.y < 0) ? -projectile->delta_pos.y : projectile->delta_pos.y;
+                break;
         }
 
         LL_REMOVE_HEAD(projectiles_inactive_head);
         LL_PUSH_HEAD(projectiles_active_head, projectile);
     }
+}
+                    
+void set_removal_script(SCRIPT_CTX * THIS) OLDCALL BANKED {
+    UBYTE *bank = VM_REF_TO_PTR(FN_ARG1);
+    UBYTE **ptr = VM_REF_TO_PTR(FN_ARG0);
+    script_bank = *bank;
+    script_address = *ptr;
 }

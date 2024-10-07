@@ -1,0 +1,9 @@
+## Changelog ##
+
+1.1.0 - 2024-10-04
+Added:
+- Anchor type
+- Script execution on projectile removal
+- Pause and unpause projectiles as well as pause on locked script
+Changed: 
+- Engine fields now exposed in settings
