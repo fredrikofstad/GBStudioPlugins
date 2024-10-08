@@ -2,7 +2,10 @@ const id = "FO_EVENT_CUSTOM_PROJECTILE";
 const groups = ["Projectiles"];
 const name = "Custom Projectile";
 
-// anchor?
+const UPDATE_VAR = (1 << 0)
+const EXECUTE_SCRIPT = (1 << 1)
+const INIFITE_LIFETIME = (1 << 2)
+const IGNORE_PLAYER = (1 << 3)
 
 const type = { 
   default: 0,
@@ -84,6 +87,17 @@ const fields = [
     type: "checkbox",
     defaultValue: false,
     conditions: [generalView],
+  },
+  {
+    key: "ignore",
+    label: "Ignore Player Collision",
+    type: "checkbox",
+    defaultValue: false,
+    conditions: [generalView,
+      {
+          key: "projectile",
+          ne: type.anchor
+      }],
   },
   {
     key: "gravity",
@@ -378,6 +392,13 @@ const fields = [
     conditions: [defaultView, anchor],
   },
   {
+    key: "anchor_ignore",
+    label: "Ignore Player Collision",
+    type: "checkbox",
+    defaultValue: true,
+    conditions: [defaultView, anchor],
+  },
+  {
     key: "orbit_x_offset",
     label: "X Offset",
     type: "number",
@@ -433,6 +454,8 @@ const compile = (input, helpers) => {
     appendRaw,
     _compileSubScript,
   } = helpers;
+  
+  let flags = 0;
 
   if (!input.projectile) {
     engineFieldSetToValue("projectile_type");
@@ -440,16 +463,20 @@ const compile = (input, helpers) => {
     engineFieldSetToValue("projectile_type", input.projectile);
   }
 
-  if (!input.lifetime) {
-    engineFieldSetToValue("projectile_no_lifetime");
-  } else {
-    engineFieldSetToValue("projectile_no_lifetime", 1);
+  if (input.lifetime) {
+    flags |= INIFITE_LIFETIME;
   }
 
   if (!input.bounds) {
     engineFieldSetToValue("projectile_no_bounds");
   } else {
     engineFieldSetToValue("projectile_no_bounds", 1);
+  }
+
+  if(input.projectile == type.anchor){
+    if(input.anchor_ignore) flags |= IGNORE_PLAYER;
+  } else {
+    if(input.ignore) flags |= IGNORE_PLAYER
   }
 
   if (input.collision == 0) {
@@ -470,10 +497,9 @@ const compile = (input, helpers) => {
 
   switch (input.death) {
     case 0:
-      engineFieldSetToValue("projectile_flags", 0);
       break;
     case 1: // update variables
-      engineFieldSetToValue("projectile_flags", 1);
+      flags |= UPDATE_VAR;
       engineFieldSetToValue("projectile_delta_x", input.varX);
       engineFieldSetToValue("projectile_delta_y", input.varY);
       break;
@@ -485,7 +511,7 @@ const compile = (input, helpers) => {
       appendRaw(`VM_PUSH_CONST ${pointer}`);
       appendRaw(`VM_CALL_NATIVE b_set_removal_script, _set_removal_script`);
       appendRaw(`VM_POP 2`);
-      engineFieldSetToValue("projectile_flags", 2);
+      flags |= EXECUTE_SCRIPT;
       break;
   }
 
@@ -528,6 +554,8 @@ const compile = (input, helpers) => {
       break;
     
   }
+  // Update all flags
+  engineFieldSetToValue("projectile_flags", flags);
 
 
 };

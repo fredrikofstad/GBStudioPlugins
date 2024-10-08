@@ -12,6 +12,12 @@
 #include "vm.h"
 
 #define FIXED 7
+#define SCALE 4
+
+#define UPDATE_VAR (1 << 0)
+#define EXECUTE_SCRIPT (1 << 1)
+#define INIFITE_LIFETIME (1 << 2)
+#define IGNORE_PLAYER (1 << 3)
 
 UBYTE projectile_type;
 UBYTE projectile_no_lifetime;
@@ -134,10 +140,11 @@ void handle_homing(projectile_t *projectile) BANKED {
 */
 
 void remove_projectile(void) NONBANKED {
-    if(projectile->flags == 1) {
+    if (projectile->flags & UPDATE_VAR) {
         *(script_memory + projectile_delta_x) = projectile->pos.x/16;
         *(script_memory + projectile_delta_y) = projectile->pos.y/16;
-    } else if(projectile->flags == 2){
+    }
+    if (projectile->flags & EXECUTE_SCRIPT){
         script_execute(script_bank, script_address, 0, 0);
     }
     projectile_t *next = projectile->next;
@@ -237,20 +244,20 @@ void handle_anchor(void) BANKED {
     x_offset += projectile->delta_pos.y;
     switch (actors[projectile_actor].dir) {
             case DIR_RIGHT:
-                projectile->pos.x = actors[projectile_actor].pos.x + (projectile->phase) +  projectile->x + x_offset;
-                projectile->pos.y = actors[projectile_actor].pos.y;
+                projectile->pos.x = actors[projectile_actor].pos.x + (projectile->phase)*SCALE + projectile->x *SCALE + x_offset;
+                projectile->pos.y = actors[projectile_actor].pos.y + projectile->y*SCALE;
                 break;
             case DIR_LEFT:
-                projectile->pos.x = actors[projectile_actor].pos.x - projectile->x - (projectile->phase) - x_offset;
-                projectile->pos.y = actors[projectile_actor].pos.y;
+                projectile->pos.x = actors[projectile_actor].pos.x - projectile->x*SCALE - (projectile->phase)*SCALE - x_offset;
+                projectile->pos.y = actors[projectile_actor].pos.y + projectile->y*SCALE;
                 break;
             case DIR_UP:
-                projectile->pos.y = actors[projectile_actor].pos.y + projectile->y - (projectile->phase) - x_offset;
-                projectile->pos.x = actors[projectile_actor].pos.x;
+                projectile->pos.y = actors[projectile_actor].pos.y + projectile->y*SCALE - (projectile->phase)*SCALE - x_offset;
+                projectile->pos.x = actors[projectile_actor].pos.x + projectile->x*SCALE;
                 break;
             case DIR_DOWN:
-                projectile->pos.y = actors[projectile_actor].pos.y - projectile->y + (projectile->phase) + x_offset;
-                projectile->pos.x = actors[projectile_actor].pos.x;
+                projectile->pos.y = actors[projectile_actor].pos.y - projectile->y*SCALE + (projectile->phase)*SCALE + x_offset;
+                projectile->pos.x = actors[projectile_actor].pos.x + projectile->x*SCALE;
                 break;
         }
     
@@ -346,7 +353,7 @@ void projectiles_update(void) NONBANKED {
                 remove_projectile();
                 continue;
             }
-            if(!projectile_no_lifetime){
+            if(!projectile_no_lifetime || !(projectile->flags & INIFITE_LIFETIME)){
                 projectile->def.life_time--;
             }
 
@@ -364,7 +371,8 @@ void projectiles_update(void) NONBANKED {
             }
 
             if (IS_FRAME_EVEN) {
-                actor_t *hit_actor = actor_overlapping_bb(&projectile->def.bounds, &projectile->pos, NULL, FALSE);
+                actor_t *hit_actor = actor_overlapping_bb(&projectile->def.bounds, &projectile->pos, 
+                (projectile->flags & IGNORE_PLAYER) ? &PLAYER : NULL, FALSE);
                 if (hit_actor && (hit_actor->collision_group & projectile->def.collision_mask)) {
                     // Hit! - Fire collision script here
                     if ((hit_actor->script.bank) && (hit_actor->hscript_hit & SCRIPT_TERMINATED)) {
@@ -515,8 +523,8 @@ void projectile_launch(UBYTE index, point16_t *pos, UBYTE angle, UBYTE flags) BA
         projectile->collision = projectile_collision;    // collision behaviour
         projectile->x = projectile_distance;             // Used for hookshot chain, orbital offset x
         projectile->y = projectile_distance2;            // Used for orbital offset y
-        projectile->flags = projectile_flags;            // callback on removal
-
+        projectile->flags = projectile_flags;            // 0-variables 1- script, 2 lifetime, 3 ignore player
+        
         x_offset = 0;
         y_offset = 0;
 
