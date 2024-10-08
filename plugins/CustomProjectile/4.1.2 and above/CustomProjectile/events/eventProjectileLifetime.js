@@ -7,7 +7,7 @@ const fields = [
 
   {
     key: "lifetime",
-    label: "Infinite Lifetime",
+    label: "Infinite Lifetime (Global)",
     type: "checkbox",
     defaultValue: false,
   }

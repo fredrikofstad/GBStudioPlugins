@@ -1,5 +1,16 @@
 ## Changelog ##
 
+1.2.0 - 2024-10-08
+Added: 
+ - Ignore Player Collision
+Changed: 
+ - Infinite Lifetime can now be changed globally or per projectile
+ - Combined bools into a bitmask
+
+1.1.1 - 2024-10-07
+
+Fixed offsets for anchor not working
+
 1.1.0 - 2024-10-04
 Added:
 - Anchor type
