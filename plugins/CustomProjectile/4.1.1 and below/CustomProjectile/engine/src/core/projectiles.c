@@ -22,6 +22,7 @@
 UBYTE projectile_type;
 UBYTE projectile_no_lifetime;
 UBYTE projectile_pause;
+UBYTE projectile_hide;
 UBYTE projectile_no_bounds;
 UBYTE projectile_collision;
 UBYTE projectile_bounce;
@@ -182,17 +183,17 @@ void handle_hookshot(void) BANKED {
                 case DIR_RIGHT:
                 case DIR_LEFT:
                     switch (projectile->x){
-                    case 1: projectile->pos.x = PLAYER.pos.x + ((head_pos.x - PLAYER.pos.x)*3) / 4; break;
-                    case 2: projectile->pos.x = (head_pos.x + PLAYER.pos.x) / 2; break;
-                    case 3: projectile->pos.x = PLAYER.pos.x + ((head_pos.x - PLAYER.pos.x)) / 4; break;
+                    case 1: projectile->pos.x = PLAYER.pos.x + (((head_pos.x - PLAYER.pos.x) * 3) >> 2); break;
+                    case 2: projectile->pos.x = (head_pos.x + PLAYER.pos.x) >> 1; break;
+                    case 3: projectile->pos.x = PLAYER.pos.x + (((head_pos.x - PLAYER.pos.x)) >> 2); break;
                     }     
                     break;
                 case DIR_UP:
                 case DIR_DOWN:
                     switch (projectile->x){
-                    case 1: projectile->pos.y = PLAYER.pos.y + ((head_pos.y - PLAYER.pos.y)*3) / 4; break;
-                    case 2: projectile->pos.y = (head_pos.y + PLAYER.pos.y) / 2; break;
-                    case 3: projectile->pos.y = PLAYER.pos.y + ((head_pos.y - PLAYER.pos.y)) / 4; break;
+                    case 1: projectile->pos.y = PLAYER.pos.y + (((head_pos.y - PLAYER.pos.y) * 3) >> 2); break;
+                    case 2: projectile->pos.y = (head_pos.y + PLAYER.pos.y) >> 1; break;
+                    case 3: projectile->pos.y = PLAYER.pos.y + (((head_pos.y + PLAYER.pos.y))) >> 2; break;
                     }  
                     break;
                 }
@@ -280,6 +281,7 @@ void handle_types(void) BANKED {
             break;
         case ANCHOR:
             handle_anchor();
+            break;
         case CUSTOM:
             handle_custom();
             break;
@@ -415,16 +417,19 @@ void projectiles_update(void) NONBANKED {
             }
         }
 
-        SWITCH_ROM(projectile->def.sprite.bank);
-        spritesheet_t *sprite = projectile->def.sprite.ptr;
+        if (!projectile_hide) {
 
-        allocated_hardware_sprites += move_metasprite(
-            *(sprite->metasprites + projectile->frame),
-            projectile->def.base_tile,
-            allocated_hardware_sprites,
-            screen_x,
-            screen_y
-        );
+            SWITCH_ROM(projectile->def.sprite.bank);
+            spritesheet_t *sprite = projectile->def.sprite.ptr;
+
+            allocated_hardware_sprites += move_metasprite(
+                *(sprite->metasprites + projectile->frame),
+                projectile->def.base_tile,
+                allocated_hardware_sprites,
+                screen_x,
+                screen_y
+            );
+        }
 
         prev_projectile = projectile;
         projectile = projectile->next;
@@ -444,12 +449,7 @@ void projectiles_render(void) NONBANKED {
               screen_y = ((projectile->pos.y >> 4) + 8) - draw_scroll_y;
 
         if (!projectile_no_bounds && (screen_x > DEVICE_SCREEN_PX_WIDTH) || (screen_y > DEVICE_SCREEN_PX_HEIGHT)) {
-            if(projectile->type == HOOKSHOT){
-                change_hookshot_state();
-            } else {
-                remove_projectile();
-                continue;
-            }
+            remove_projectile();
         }
 
         SWITCH_ROM(projectile->def.sprite.bank);
