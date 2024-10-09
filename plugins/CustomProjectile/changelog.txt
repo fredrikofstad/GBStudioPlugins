@@ -1,5 +1,12 @@
 ## Changelog ##
 
+1.2.1 - 2024-10-08
+Changed:
+ - Bitshifting for hookshot chain 
+ - Can use both script Execution and variable update
+ Fixed:
+ - Anchor type not breaking on switch statement
+
 1.2.0 - 2024-10-08
 Added: 
  - Ignore Player Collision

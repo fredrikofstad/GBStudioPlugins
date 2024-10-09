@@ -159,26 +159,13 @@ const fields = [
       [0, "Default"],
       [1, "Update Variables"],
       [2, "Execute script"],
+      [3, "Both"],
     ], 
     defaultValue: 0,
     conditions: [generalView,
       {
         key: "projectile",
         ne: type.custom
-      }
-    ]
-  },
-
-  {
-    key: "script",
-    label: "On Removal",
-    description: "Projectile Removal Script",
-    type: "events",
-    allowedContexts: ["global", "entity"],
-    conditions: [generalView,
-      {
-        key: "death",
-        eq: 2
       }
     ]
   },
@@ -215,6 +202,54 @@ const fields = [
       }
     ],
   },
+  // find out if I can have multiple OR conditions
+  {
+    key: "varX",
+    label: "X Position of Projectile",
+    type: "variable",
+    defaultValue: "LAST_VARIABLE",
+    conditions: [generalView, 
+      {
+        key: "death",
+        eq: 3
+      },
+      {
+        key: "projectile",
+        ne: type.custom
+      }
+  ],
+  },
+  {
+    key: "varY",
+    label: "Y Position of projectile",
+    type: "variable",
+    defaultValue: "LAST_VARIABLE",
+    conditions: [generalView, 
+      {
+        key: "death",
+        eq: 3
+      },
+      {
+        key: "projectile",
+        ne: type.custom
+      }
+    ],
+  },
+
+  {
+    key: "script",
+    label: "On Removal",
+    description: "Projectile Removal Script",
+    type: "events",
+    allowedContexts: ["global", "entity"],
+    conditions: [generalView,
+      {
+        key: "death",
+        gte: 2
+      }
+    ]
+  },
+  
   // PROJECTILES
   {
     key: "projectile",
@@ -503,6 +538,10 @@ const compile = (input, helpers) => {
       engineFieldSetToValue("projectile_delta_x", input.varX);
       engineFieldSetToValue("projectile_delta_y", input.varY);
       break;
+    case 3: // a bit substandard?
+      flags |= UPDATE_VAR;
+      engineFieldSetToValue("projectile_delta_x", input.varX);
+      engineFieldSetToValue("projectile_delta_y", input.varY);
     case 2: // execute script
       const ref = _compileSubScript("projectile", input.script, "p_removal");
       const bank = `___bank_${ref}`;

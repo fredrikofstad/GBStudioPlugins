@@ -182,17 +182,17 @@ void handle_hookshot(void) BANKED {
                 case DIR_RIGHT:
                 case DIR_LEFT:
                     switch (projectile->x){
-                    case 1: projectile->pos.x = PLAYER.pos.x + ((head_pos.x - PLAYER.pos.x)*3) / 4; break;
-                    case 2: projectile->pos.x = (head_pos.x + PLAYER.pos.x) / 2; break;
-                    case 3: projectile->pos.x = PLAYER.pos.x + ((head_pos.x - PLAYER.pos.x)) / 4; break;
+                    case 1: projectile->pos.x = PLAYER.pos.x + (((head_pos.x - PLAYER.pos.x) * 3) >> 2); break;
+                    case 2: projectile->pos.x = (head_pos.x + PLAYER.pos.x) >> 1; break;
+                    case 3: projectile->pos.x = PLAYER.pos.x + (((head_pos.x - PLAYER.pos.x)) >> 2); break;
                     }     
                     break;
                 case DIR_UP:
                 case DIR_DOWN:
                     switch (projectile->x){
-                    case 1: projectile->pos.y = PLAYER.pos.y + ((head_pos.y - PLAYER.pos.y)*3) / 4; break;
-                    case 2: projectile->pos.y = (head_pos.y + PLAYER.pos.y) / 2; break;
-                    case 3: projectile->pos.y = PLAYER.pos.y + ((head_pos.y - PLAYER.pos.y)) / 4; break;
+                    case 1: projectile->pos.y = PLAYER.pos.y + (((head_pos.y - PLAYER.pos.y) * 3) >> 2); break;
+                    case 2: projectile->pos.y = (head_pos.y + PLAYER.pos.y) >> 1; break;
+                    case 3: projectile->pos.y = PLAYER.pos.y + (((head_pos.y + PLAYER.pos.y))) >> 2; break;
                     }  
                     break;
                 }
@@ -280,6 +280,7 @@ void handle_types(void) BANKED {
             break;
         case ANCHOR:
             handle_anchor();
+            break;
         case CUSTOM:
             handle_custom();
             break;
