@@ -1,5 +1,5 @@
 {
-  "version": "4.1.0-e1",
+  "version": "4.2.0-e1",
 
   "fields": [
     {
@@ -29,6 +29,18 @@
         [0, "Off"],
         [1, "Pause All Projectiles"],
         [2, "Pause on Locked Script"]
+      ],
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
+      "key": "projectile_hide",
+      "label": "Hide All Projectiles",
+      "group": "Custom Projectiles",
+      "type": "select",
+      "options": [
+        [0, "Show"],
+        [1, "Hide"]
       ],
       "cType": "UBYTE",
       "defaultValue": 0

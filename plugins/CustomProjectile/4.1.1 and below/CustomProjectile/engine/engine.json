@@ -34,6 +34,18 @@
       "defaultValue": 0
     },
     {
+      "key": "projectile_hide",
+      "label": "Hide All Projectiles",
+      "group": "Custom Projectiles",
+      "type": "select",
+      "options": [
+        [0, "Show"],
+        [1, "Hide"]
+      ],
+      "cType": "UBYTE",
+      "defaultValue": 0
+    },
+    {
       "key": "projectile_no_lifetime",
       "label": "Inifinite Lifetime",
       "group": "Custom Projectiles",

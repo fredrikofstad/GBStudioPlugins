@@ -22,6 +22,7 @@
 UBYTE projectile_type;
 UBYTE projectile_no_lifetime;
 UBYTE projectile_pause;
+UBYTE projectile_hide;
 UBYTE projectile_no_bounds;
 UBYTE projectile_collision;
 UBYTE projectile_bounce;
@@ -416,16 +417,19 @@ void projectiles_update(void) NONBANKED {
             }
         }
 
-        SWITCH_ROM(projectile->def.sprite.bank);
-        spritesheet_t *sprite = projectile->def.sprite.ptr;
+        if (!projectile_hide) {
 
-        allocated_hardware_sprites += move_metasprite(
-            *(sprite->metasprites + projectile->frame),
-            projectile->def.base_tile,
-            allocated_hardware_sprites,
-            screen_x,
-            screen_y
-        );
+            SWITCH_ROM(projectile->def.sprite.bank);
+            spritesheet_t *sprite = projectile->def.sprite.ptr;
+
+            allocated_hardware_sprites += move_metasprite(
+                *(sprite->metasprites + projectile->frame),
+                projectile->def.base_tile,
+                allocated_hardware_sprites,
+                screen_x,
+                screen_y
+            );
+        }
 
         prev_projectile = projectile;
         projectile = projectile->next;
@@ -445,12 +449,7 @@ void projectiles_render(void) NONBANKED {
               screen_y = ((projectile->pos.y >> 4) + 8) - draw_scroll_y;
 
         if (!projectile_no_bounds && (screen_x > DEVICE_SCREEN_PX_WIDTH) || (screen_y > DEVICE_SCREEN_PX_HEIGHT)) {
-            if(projectile->type == HOOKSHOT){
-                change_hookshot_state();
-            } else {
-                remove_projectile();
-                continue;
-            }
+            remove_projectile();
         }
 
         SWITCH_ROM(projectile->def.sprite.bank);
