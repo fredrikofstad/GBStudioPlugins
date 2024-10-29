@@ -355,7 +355,7 @@ void projectiles_update(void) NONBANKED {
                 remove_projectile();
                 continue;
             }
-            if(!projectile_no_lifetime || !(projectile->flags & INIFITE_LIFETIME)){
+            if(!projectile_no_lifetime && !(projectile->flags & INIFITE_LIFETIME)){
                 projectile->def.life_time--;
             }
 
